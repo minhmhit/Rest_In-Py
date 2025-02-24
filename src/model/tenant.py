@@ -1,0 +1,1 @@
+# Lớp và hàm khách thuê

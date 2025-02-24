@@ -1,0 +1,20 @@
+Khởi tạo ứng dụng (main.py):
+
+Import các module Controller và View.
+Tạo đối tượng kết nối cơ sở dữ liệu từ model/database.py.
+Khởi tạo cửa sổ chính từ view/main_window.py.
+Khởi tạo các Controller, truyền vào đối tượng View và Model tương ứng.
+Giao tiếp giữa View và Controller:
+
+Trong file giao diện (ví dụ: tenant_view.py), định nghĩa các thành phần giao diện và các sự kiện (button click, nhập liệu,...).
+Khi một sự kiện xảy ra (ví dụ: nhấn nút “Thêm khách thuê”), View sẽ gọi một hàm trong Controller (ví dụ: add_tenant()).
+Controller nhận dữ liệu từ View, gọi các hàm tương ứng từ Model (thêm dữ liệu vào database), sau đó cập nhật lại giao diện qua View.
+Xử lý dữ liệu tại Model:
+
+Các lớp trong Model sẽ định nghĩa các phương thức thao tác dữ liệu. Controller sẽ gọi các phương thức này để thực hiện thao tác như thêm, sửa, xóa, truy vấn.
+Nếu có thay đổi dữ liệu (ví dụ: thêm khách thuê thành công), Controller sẽ nhận kết quả và gọi hàm cập nhật giao diện ở View.
+Tích hợp chức năng AI nhận diện khuôn mặt:
+
+Từ giao diện, khi người dùng chụp ảnh khuôn mặt hoặc tải ảnh lên, View sẽ gửi ảnh cho Controller.
+Controller sẽ gọi các hàm trong module ai/face_recognition.py để xử lý và so sánh với dữ liệu đã lưu trong database (có thể lưu encoding của khuôn mặt trong bảng Tenants).
+Kết quả trả về (ví dụ: nhận diện thành công hay không) sẽ được Controller xử lý và cập nhật thông báo hoặc giao diện cho người dùng.

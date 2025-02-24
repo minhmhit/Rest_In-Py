@@ -1,0 +1,1 @@
+# xử lý logic kết nối giữa view và controller
