@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500">
+  <!-- Các màu nền -->
+  <defs>
+    <linearGradient id="model-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e6f7ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#bae7ff;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="view-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f6ffed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d9f7be;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="controller-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#fff2e8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffd8bf;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="ai-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f9f0ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#efdbff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Tiêu đề -->
+  <text x="600" y="50" text-anchor="middle" font-family="Arial" font-size="24" font-weight="bold">Sơ đồ UML Quản Lý Nhà Trọ</text>
+
+  <!-- Model Package -->
+  <g transform="translate(50, 100)">
+    <rect x="0" y="0" width="320" height="800" rx="10" ry="10" fill="url(#model-gradient)" stroke="#1890ff" stroke-width="2"/>
+    <text x="160" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold">Model</text>
+
+    <!-- Database Class -->
+    <rect x="20" y="50" width="280" height="120" rx="5" ry="5" fill="white" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="80" x2="300" y2="80" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="110" x2="300" y2="110" stroke="#1890ff" stroke-width="1"/>
+    <text x="160" y="70" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">Database</text>
+    <text x="30" y="100" font-family="Arial" font-size="14">- connection: MySQLConnection</text>
+    <text x="30" y="130" font-family="Arial" font-size="14">+ connect()</text>
+    <text x="30" y="150" font-family="Arial" font-size="14">+ execute_query(query: str): Result</text>
+
+    <!-- NguoiThue Class -->
+    <rect x="20" y="190" width="280" height="180" rx="5" ry="5" fill="white" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="220" x2="300" y2="220" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="280" x2="300" y2="280" stroke="#1890ff" stroke-width="1"/>
+    <text x="160" y="210" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">NguoiThue</text>
+    <text x="30" y="240" font-family="Arial" font-size="14">- ma_nguoi_thue: int</text>
+    <text x="30" y="260" font-family="Arial" font-size="14">- ho_ten: str</text>
+    <text x="30" y="280" font-family="Arial" font-size="14">- du_lieu_khuon_mat: bytes</text>
+    <text x="30" y="300" font-family="Arial" font-size="14">+ get_all(): List[NguoiThue]</text>
+    <text x="30" y="320" font-family="Arial" font-size="14">+ tim_kiem(ten: str): List[NguoiThue]</text>
+    <text x="30" y="340" font-family="Arial" font-size="14">+ luu_thong_tin(): bool</text>
+
+    <!-- Phong Class -->
+    <rect x="20" y="390" width="280" height="170" rx="5" ry="5" fill="white" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="420" x2="300" y2="420" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="480" x2="300" y2="480" stroke="#1890ff" stroke-width="1"/>
+    <text x="160" y="410" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">Phong</text>
+    <text x="30" y="440" font-family="Arial" font-size="14">- ma_phong: int</text>
+    <text x="30" y="460" font-family="Arial" font-size="14">- so_phong: str</text>
+    <text x="30" y="480" font-family="Arial" font-size="14">- gia_thue: float</text>
+    <text x="30" y="500" font-family="Arial" font-size="14">+ get_all(): List[Phong]</text>
+    <text x="30" y="520" font-family="Arial" font-size="14">+ tim_phong_trong(): List[Phong]</text>
+    <text x="30" y="540" font-family="Arial" font-size="14">+ cap_nhat_trang_thai(): bool</text>
+
+    <!-- DichVu Class -->
+    <rect x="20" y="580" width="280" height="150" rx="5" ry="5" fill="white" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="610" x2="300" y2="610" stroke="#1890ff" stroke-width="1"/>
+    <line x1="20" y1="650" x2="300" y2="650" stroke="#1890ff" stroke-width="1"/>
+    <text x="160" y="600" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">DichVu</text>
+    <text x="30" y="630" font-family="Arial" font-size="14">- ma_dich_vu: int</text>
+    <text x="30" y="650" font-family="Arial" font-size="14">- ten_dich_vu: str</text>
+    <text x="30" y="670" font-family="Arial" font-size="14">+ get_all(): List[DichVu]</text>
+    <text x="30" y="690" font-family="Arial" font-size="14">+ cap_nhat_don_gia(gia: float): bool</text>
+    <text x="30" y="710" font-family="Arial" font-size="14">+ tinh_tien_dich_vu(so_luong: float): float</text>
+  </g>
+
+  <!-- View Package -->
+  <g transform="translate(430, 100)">
+    <rect x="0" y="0" width="320" height="600" rx="10" ry="10" fill="url(#view-gradient)" stroke="#52c41a" stroke-width="2"/>
+    <text x="160" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold">View</text>
+
+    <!-- MainWindow Class -->
+    <rect x="20" y="50" width="280" height="100" rx="5" ry="5" fill="white" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="80" x2="300" y2="80" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="100" x2="300" y2="100" stroke="#52c41a" stroke-width="1"/>
+    <text x="160" y="70" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">MainWindow</text>
+    <text x="30" y="120" font-family="Arial" font-size="14">+ setup_ui()</text>
+    <text x="30" y="140" font-family="Arial" font-size="14">+ show_view(view_name: str)</text>
+
+    <!-- NguoiThueView Class -->
+    <rect x="20" y="170" width="280" height="120" rx="5" ry="5" fill="white" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="200" x2="300" y2="200" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="220" x2="300" y2="220" stroke="#52c41a" stroke-width="1"/>
+    <text x="160" y="190" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">NguoiThueView</text>
+    <text x="30" y="240" font-family="Arial" font-size="14">+ hien_thi_danh_sach(nguoi_thue: List)</text>
+    <text x="30" y="260" font-family="Arial" font-size="14">+ them_nguoi_thue_form()</text>
+    <text x="30" y="280" font-family="Arial" font-size="14">+ xoa_nguoi_thue_form()</text>
+
+    <!-- PhongView Class -->
+    <rect x="20" y="310" width="280" height="120" rx="5" ry="5" fill="white" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="340" x2="300" y2="340" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="360" x2="300" y2="360" stroke="#52c41a" stroke-width="1"/>
+    <text x="160" y="330" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">PhongView</text>
+    <text x="30" y="380" font-family="Arial" font-size="14">+ hien_thi_danh_sach_phong(phong: List)</text>
+    <text x="30" y="400" font-family="Arial" font-size="14">+ cap_nhat_phong_form()</text>
+    <text x="30" y="420" font-family="Arial" font-size="14">+ tim_kiem_phong(tieu_chi: Dict)</text>
+
+    <!-- ThanhToanView Class -->
+    <rect x="20" y="450" width="280" height="120" rx="5" ry="5" fill="white" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="480" x2="300" y2="480" stroke="#52c41a" stroke-width="1"/>
+    <line x1="20" y1="500" x2="300" y2="500" stroke="#52c41a" stroke-width="1"/>
+    <text x="160" y="470" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">ThanhToanView</text>
+    <text x="30" y="520" font-family="Arial" font-size="14">+ hien_thi_hoa_don(hoa_don: Dict)</text>
+    <text x="30" y="540" font-family="Arial" font-size="14">+ nhap_chi_so_dich_vu_form()</text>
+    <text x="30" y="560" font-family="Arial" font-size="14">+ thanh_toan_form()</text>
+  </g>
+
+  <!-- Controller Package -->
+  <g transform="translate(810, 100)">
+    <rect x="0" y="0" width="320" height="500" rx="10" ry="10" fill="url(#controller-gradient)" stroke="#fa8c16" stroke-width="2"/>
+    <text x="160" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold">Controller</text>
+
+    <!-- NguoiThueController Class -->
+    <rect x="20" y="50" width="280" height="120" rx="5" ry="5" fill="white" stroke="#fa8c16" stroke-width="1"/>
+    <line x1="20" y1="80" x2="300" y2="80" stroke="#fa8c16" stroke-width="1"/>
+    <line x1="20" y1="100" x2="300" y2="100" stroke="#fa8c16" stroke-width="1"/>
+    <text x="160" y="70" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">NguoiThueController</text>
+    <text x="30" y="120" font-family="Arial" font-size="14">+ lay_danh_sach_nguoi_thue()</text>
+    <text x="30" y="140" font-family="Arial" font-size="14">+ them_nguoi_thue(data: Dict)</text>
+    <text x="30" y="160" font-family="Arial" font-size="14">+ nhan_dien_khuon_mat(image: Image)</text>
+
+    <!-- PhongController Class -->
+    <rect x="20" y="190" width="280" height="120" rx="5" ry="5" fill="white" stroke="#fa8c16" stroke-width="1"/>
+    <line x1="20" y1="220" x2="300" y2="220" stroke="#fa8c16" stroke-width="1"/>
+    <line x1="20" y1="240" x2="300" y2="240" stroke="#fa8c16" stroke-width="1"/>
+    <text x="160" y="210" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">PhongController</text>
+    <text x="30" y="260" font-family="Arial" font-size="14">+ lay_danh_sach_phong()</text>
+    <text x="30" y="280" font-family="Arial" font-size="14">+ cap_nhat_phong(ma_phong, data: Dict)</text>
+    <text x="30" y="300" font-family="Arial" font-size="14">+ xem_thong_tin_phong(ma_phong)</text>
+
+    <!-- DichVuController Class -->
+    <rect x="20" y="330" width="280" height="140" rx="5" ry="5" fill="white" stroke="#fa8c16" stroke-width="1"/>
+    <line x1="20" y1="360" x2="300" y2="360" stroke="#fa8c16" stroke-width="1"/>
+    <line x1="20" y1="380" x2="300" y2="380" stroke="#fa8c16" stroke-width="1"/>
+    <text x="160" y="350" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">DichVuController</text>
+    <text x="30" y="400" font-family="Arial" font-size="14">+ tinh_tien_dich_vu(ma_phong, thang)</text>
+    <text x="30" y="420" font-family="Arial" font-size="14">+ nhap_chi_so_dich_vu(ma_phong, data)</text>
+    <text x="30" y="440" font-family="Arial" font-size="14">+ xuat_hoa_don(ma_phong, thang)</text>
+    <text x="30" y="460" font-family="Arial" font-size="14">+ thanh_toan_hoa_don(ma_hoa_don)</text>
+  </g>
+
+  <!-- AI Package -->
+  <g transform="translate(430, 720)">
+    <rect x="0" y="0" width="320" height="200" rx="10" ry="10" fill="url(#ai-gradient)" stroke="#722ed1" stroke-width="2"/>
+    <text x="160" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold">AI</text>
+
+    <!-- FaceRecognition Class -->
+    <rect x="20" y="50" width="280" height="120" rx="5" ry="5" fill="white" stroke="#722ed1" stroke-width="1"/>
+    <line x1="20" y1="80" x2="300" y2="80" stroke="#722ed1" stroke-width="1"/>
+    <line x1="20" y1="100" x2="300" y2="100" stroke="#722ed1" stroke-width="1"/>
+    <text x="160" y="70" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">FaceRecognition</text>
+    <text x="30" y="120" font-family="Arial" font-size="14">+ phat_hien_khuon_mat(image): List</text>
+    <text x="30" y="140" font-family="Arial" font-size="14">+ ma_hoa_khuon_mat(image): bytes</text>
+    <text x="30" y="160" font-family="Arial" font-size="14">+ nhan_dien_nguoi_thue(image): int</text>
+  </g>
+
+  <!-- Các mối quan hệ -->
+  <!-- Model - Controller -->
+  <line x1="370" y1="240" x2="810" y2="110" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="810,110 800,106 800,114" fill="#888888"/>
+  
+  <line x1="370" y1="440" x2="810" y2="250" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="810,250 800,246 800,254" fill="#888888"/>
+  
+  <line x1="370" y1="630" x2="810" y2="390" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="810,390 800,386 800,394" fill="#888888"/>
+
+  <!-- Controller - View -->
+  <line x1="810" y1="110" x2="750" y2="190" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="750,190 746,180 754,180" fill="#888888"/>
+  
+  <line x1="810" y1="250" x2="750" y2="330" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="750,330 746,320 754,320" fill="#888888"/>
+  
+  <line x1="810" y1="390" x2="750" y2="470" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="750,470 746,460 754,460" fill="#888888"/>
+
+  <!-- AI - Controller -->
+  <line x1="590" y1="720" x2="870" y2="170" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="870,170 868,160 878,165" fill="#888888"/>
+
+  <!-- Main Window - View -->
+  <line x1="590" y1="150" x2="590" y2="170" stroke="#888888" stroke-width="1.5"/>
+  <polygon points="590,170 586,160 594,160" fill="#888888"/>
+  
+  <line x1="590" y1="150" x2="590" y2="310" stroke="#888888" stroke-width="1.5"/>
+  <polygon points="590,310 586,300 594,300" fill="#888888"/>
+  
+  <line x1="590" y1="150" x2="590" y2="450" stroke="#888888" stroke-width="1.5"/>
+  <polygon points="590,450 586,440 594,440" fill="#888888"/>
+
+  <!-- Database - Models -->
+  <line x1="160" y1="170" x2="160" y2="190" stroke="#888888" stroke-width="1.5"/>
+  <polygon points="160,190 156,180 164,180" fill="#888888"/>
+  
+  <line x1="160" y1="170" x2="160" y2="390" stroke="#888888" stroke-width="1.5"/>
+  <polygon points="160,390 156,380 164,380" fill="#888888"/>
+  
+  <line x1="160" y1="170" x2="160" y2="580" stroke="#888888" stroke-width="1.5"/>
+  <polygon points="160,580 156,570 164,570" fill="#888888"/>
+
+  <!-- Legend -->
+  <rect x="810" y="720" width="320" height="100" rx="10" ry="10" fill="white" stroke="#888888" stroke-width="1"/>
+  <text x="970" y="740" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">Chú thích</text>
+  
+  <line x1="830" y1="760" x2="860" y2="760" stroke="#888888" stroke-width="1.5"/>
+  <polygon points="860,760 850,756 850,764" fill="#888888"/>
+  <text x="870" y="765" font-family="Arial" font-size="14">Kế thừa</text>
+  
+  <line x1="830" y1="790" x2="860" y2="790" stroke="#888888" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <polygon points="860,790 850,786 850,794" fill="#888888"/>
+  <text x="870" y="795" font-family="Arial" font-size="14">Sử dụng</text>
+  
+  <!-- Tiêu đề chú thích -->
+  <text x="600" y="975" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">Mô tả kiến trúc Model-View-Controller (MVC)</text>
+  <text x="600" y="1000" text-anchor="middle" font-family="Arial" font-size="14">Kiến trúc 3 lớp giúp phân tách trách nhiệm và dễ bảo trì phát triển</text>
+  
+  <!-- Mô tả chi tiết về từng thành phần -->
+  <rect x="200" y="1030" width="800" height="350" rx="10" ry="10" fill="#f5f5f5" stroke="#d9d9d9" stroke-width="1"/>
+  
+  <text x="220" y="1060" font-family="Arial" font-size="16" font-weight="bold">Model:</text>
+  <text x="220" y="1085" font-family="Arial" font-size="14">- Đại diện cho dữ liệu và logic nghiệp vụ của ứng dụng</text>
+  <text x="220" y="1110" font-family="Arial" font-size="14">- Xử lý kết nối và truy vấn database</text>
+  <text x="220" y="1135" font-family="Arial" font-size="14">- Định nghĩa các đối tượng dữ liệu: NguoiThue, Phong, DichVu, HopDong, ThanhToan</text>
+  
+  <text x="220" y="1175" font-family="Arial" font-size="16" font-weight="bold">View:</text>
+  <text x="220" y="1200" font-family="Arial" font-size="14">- Xử lý giao diện người dùng</text>
+  <text x="220" y="1225" font-family="Arial" font-size="14">- Hiển thị dữ liệu cho người dùng</text>
+  <text x="220" y="1250" font-family="Arial" font-size="14">- Chuyển các tương tác người dùng đến Controller</text>
+  
+  <text x="220" y="1290" font-family="Arial" font-size="16" font-weight="bold">Controller:</text>
+  <text x="220" y="1315" font-family="Arial" font-size="14">- Xử lý logic điều khiển giữa Model và View</text>
+  <text x="220" y="1340" font-family="Arial" font-size="14">- Phản hồi các sự kiện từ người dùng</text>
+  <text x="220" y="1365" font-family="Arial" font-size="14">- Cập nhật Model và View khi có thay đổi</text>
+</svg>
