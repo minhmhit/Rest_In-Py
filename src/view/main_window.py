@@ -1,1 +1,6 @@
-# cửa sổ chính ứng dụng
+import tkinter
+from root_window import root
+
+
+
+# root.mainloop()
