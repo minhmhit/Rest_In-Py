@@ -1,28 +1,60 @@
-# tạo module view
-import tkinter 
+import tkinter as tk
+from login_page import LoginPage
+from tab1 import Tab1
+from tab2 import Tab2
+from tab3 import Tab3
+from tab4 import Tab4
+from tab5 import Tab5
 
-# initialize
-root = tkinter.Tk()
+# main window
+root = tk.Tk()
 root.geometry("1280x720")
-root.title("Window")
+root.configure(bg="#3B82F6")
 
-# frame
-frame = tkinter.Frame(root)
-frame.grid(sticky="nsew")
+# app bar 
+appbar = tk.Frame(root, bg="#3B82F6", height=50)
+title = tk.Label(appbar, text="Màn Hình Chính", bg="#3B82F6", fg="white", font=("Arial", 16, "bold"))
 
-# app bar,interact screen 
-root.grid_rowconfigure(0, weight=2)  # App bar (fixed height)
-root.grid_rowconfigure(1, weight=20)  # Main content (expands)
-root.grid_columnconfigure(0, weight=1)
+# buttons for switching tabs 
+button_frame = tk.Frame(appbar, bg="#3B82F6")
+buttons = []
 
-# Create the app bar (10% height of the window)
-app_bar = tkinter.LabelFrame(root, bg="black", text="App Bar", fg="white",bd=0,)
-app_bar.grid(row=0, column=0, sticky="nsew")
+# dictionary to store tab frames 
+tabs = {}
 
-# Create the main content area
-main_content = tkinter.LabelFrame(root, bg="white", text="Main Content",bd=0)
-main_content.grid(row=1, column=0, sticky="nsew")
+def show_main():
+    login_frame.pack_forget()  # Hide login page
+    appbar.pack(fill="x")  # Show the app bar
+    title.pack(side="left", padx=10)
+    button_frame.pack(side="right")
 
+    # Create and show tabs
+    global tabs
+    tabs = {
+        "Tab 1": Tab1(root),
+        "Tab 2": Tab2(root),
+        "Tab 3": Tab3(root),
+        "Tab 4": Tab4(root),
+        "Tab 5": Tab5(root),
+    }
 
-# run app
+    # create buttons to switch tabs
+    for name in tabs.keys():
+        btn = tk.Button(button_frame, width=16, text=name, bd=0, bg="#3B82F6", fg="white",
+                        command=lambda n=name: show_tab(n))
+        btn.pack(side="left", padx=5)
+        buttons.append(btn)
+
+    show_tab("Tab 1")  # show first tab by default
+
+def show_tab(tab_name):
+    for tab in tabs.values():
+        tab.pack_forget()
+    tabs[tab_name].pack(expand=True, fill="both")
+
+# create the login page (only this is visible at start)
+login_frame = LoginPage(root, show_main)
+login_frame.pack(expand=True, fill="both")
+
+# start the app
 root.mainloop()
