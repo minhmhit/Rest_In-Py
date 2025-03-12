@@ -1,1 +1,0 @@
-# cửa sổ chính ứng dụng
