@@ -29,7 +29,7 @@ class LoginPage(tk.Frame):
     def login(self):
         username = self.entry_username.get()
         password = self.entry_password.get()
-        if username == "admin" and password == "123":
+        if username == "1" and password == "1":
             messagebox.showinfo("Login Successful", "Welcome!")
             self.show_main()  # Switch to the main application
         else:

@@ -1,10 +1,10 @@
 import tkinter as tk
 from login_page import LoginPage
-from tab1 import Tab1
 from tab2 import Tab2
 from tab3 import Tab3
 from tab4 import Tab4
 from tab5 import Tab5
+from camera import Camera
 
 # main window
 root = tk.Tk()
@@ -31,7 +31,7 @@ def show_main():
     # Create and show tabs
     global tabs
     tabs = {
-        "Tab 1": Tab1(root),
+        "Camera": Camera(root),
         "Tab 2": Tab2(root),
         "Tab 3": Tab3(root),
         "Tab 4": Tab4(root),
@@ -45,7 +45,7 @@ def show_main():
         btn.pack(side="left", padx=5)
         buttons.append(btn)
 
-    show_tab("Tab 1")  # show first tab by default
+    show_tab("Camera")  # show first tab by default
 
 def show_tab(tab_name):
     for tab in tabs.values():
