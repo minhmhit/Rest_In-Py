@@ -5,7 +5,9 @@ import cv2
 from PIL import Image, ImageTk
 
 color1 = "#deffff"
-video_path = "video.mp4"
+video_path1 = "color.mp4"
+video_path2 = "720p.mp4"
+video_path3 = "1080p.mp4"
 
 class Camera(tk.Frame):
     def __init__(self, parent):
@@ -36,12 +38,12 @@ class Camera(tk.Frame):
 
         # place Label
         title_video.grid(row=0,column=0,sticky="nsew")
-        show_camera.grid(row=1,column=0,sticky="nsew")
+        show_camera.grid(row=1,column=0,sticky="")
 
         # add camera
-        self.show_camera = tk.Label(mainPanel, bg=color1)
+        self.show_camera = tk.Label(mainPanel, bg=color1,height=100,width=100)
         self.show_camera.grid(row=1, column=0, sticky="nsew")
-        self.video_stream = VideoStream(video_source=video_path)
+        self.video_stream = VideoStream(video_source=video_path3)
         self.update_frame()
 
 
