@@ -1,10 +1,10 @@
 import tkinter as tk
 from login_page import LoginPage
-from tab2 import Tab2
 from tab3 import Tab3
 from tab4 import Tab4
-from tab5 import Tab5
 from camera import Camera
+from checkout import Checkout
+from settings import Settings
 
 # main window
 root = tk.Tk()
@@ -32,10 +32,10 @@ def show_main():
     global tabs
     tabs = {
         "Camera": Camera(root),
-        "Tab 2": Tab2(root),
+        "Thanh Toán": Checkout(root),
         "Tab 3": Tab3(root),
         "Tab 4": Tab4(root),
-        "Tab 5": Tab5(root),
+        "Settings": Settings(root),
     }
 
     # create buttons to switch tabs
