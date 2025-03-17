@@ -41,7 +41,7 @@ class Camera(tk.Frame):
         show_camera.grid(row=1,column=0,sticky="")
 
         # add camera
-        self.show_camera = tk.Label(mainPanel, bg=color1,height=100,width=100)
+        self.show_camera = tk.Label(mainPanel, bg=color1,height=1280,width=720)
         self.show_camera.grid(row=1, column=0, sticky="nsew")
         self.video_stream = VideoStream(video_source=video_path3)
         self.update_frame()
