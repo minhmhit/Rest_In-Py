@@ -35,7 +35,7 @@ def show_main():
         "Thanh Toán": Checkout(root),
         "Tab 3": Tab3(root),
         "Tab 4": Tab4(root),
-        "Settings": Settings(root),
+        "Cài Đặt": Settings(root),
     }
 
     # create buttons to switch tabs
