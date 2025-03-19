@@ -22,9 +22,10 @@ buttons = []
 # dictionary to store tab frames 
 tabs = {}
 
+# main function
 def show_main():
-    login_frame.pack_forget()  # Hide login page
-    appbar.pack(fill="x")  # Show the app bar
+    login_frame.pack_forget()  # hide login page
+    appbar.pack(fill="x")  # show the app bar
     title.pack(side="left", padx=10)
     button_frame.pack(side="right")
 
