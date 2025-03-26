@@ -1,7 +1,6 @@
 import random
 import string
 import tkinter as tk
-
 import cv2
 import numpy
 from numpy import printoptions, random
@@ -85,7 +84,9 @@ class Camera(tk.Frame):
             self.mainPanel, bg=color1, height=1280, width=720
         )
         self.show_camera.grid(row=1, column=0, sticky="nsew")
-        self.video_stream = VideoStream(video_source=video_path3)
+        mainPanel.rowconfigure(1, weight=1)
+        mainPanel.columnconfigure(0, weight=1)
+        self.cap = cv2.VideoCapture(0)
         self.update_frame()
 
     def get_notification(self, strings):
@@ -134,5 +135,6 @@ class Camera(tk.Frame):
         self.show_camera.after(10, self.update_frame)
 
     def __del__(self):
-        """Ensure the video stream is released properly"""
-        self.video_stream.release()
+        """Giải phóng webcam khi đóng ứng dụng"""
+        self.cap.release()
+        cv2.destroyAllWindows()
