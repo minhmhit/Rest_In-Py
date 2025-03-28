@@ -1,53 +1,49 @@
-from model.room import Room
-class RoomController:
-    def __init__(self, view):
-        self.view = view
-        self.rooms = []
-        self.next_id = 1
-        
-        # Thêm một số phòng mẫu
-        self.add_room("101", 2000000, 20)
-        self.add_room("102", 1800000, 18)
-        self.add_room("103", 2500000, 25)
+from database import Session
+from model import Room
+
+def create_room(room_number, price, status='available'):
+   
+    session = Session()
+    new_room = Room(room_number=room_number, price=price, status=status)
+    session.add(new_room)
+    session.commit()
+    session.close()
+
+def get_room_by_id(room_id):
     
-    def list_rooms(self):
-        self.view.show_rooms(self.rooms)
+    session = Session()
+    room = session.query(Room).filter_by(id=room_id).first()
+    session.close()
+    return room
+
+def get_all_rooms():
     
-    def add_room(self, room_number, price, area):
-        room = Room(self.next_id, room_number, price, area)
-        self.rooms.append(room)
-        self.next_id += 1
-        return room
+    session = Session()
+    rooms = session.query(Room).all()
+    session.close()
+    return rooms
+
+def update_room(room_id, **kwargs):
+   
+    session = Session()
+    room = session.query(Room).filter_by(id=room_id).first()
+    if room:
+        for key, value in kwargs.items():
+            setattr(room, key, value)
+        session.commit()
+    else:
+        raise ValueError("Không tìm thấy phòng")
+    session.close()
+
+def delete_room(room_id):
     
-    def update_room(self, room_id, room_number, price, area, status):
-        for room in self.rooms:
-            if room.room_id == room_id:
-                room.room_number = room_number
-                room.price = price
-                room.area = area
-                room.status = status
-                return True
-        return False
-    
-    def delete_room(self, room_id):
-        for i, room in enumerate(self.rooms):
-            if room.room_id == room_id:
-                del self.rooms[i]
-                return True
-        return False
-    
-    def get_room(self, room_id):
-        for room in self.rooms:
-            if room.room_id == room_id:
-                return room
-        return None
-    
-    def get_available_rooms(self):
-        return [room for room in self.rooms if room.status == "available"]
-    
-    def set_room_status(self, room_id, status):
-        room = self.get_room(room_id)
-        if room:
-            room.status = status
-            return True
-        return False
+    session = Session()
+    room = session.query(Room).filter_by(id=room_id).first()
+    if room:
+        if room.tenants:  
+            raise ValueError("Không thể xóa phòng đang có khách thuê")
+        session.delete(room)
+        session.commit()
+    else:
+        raise ValueError("Không tìm thấy phòng")
+    session.close()
