@@ -1,1 +1,0 @@
-# kết nối db và xử lý

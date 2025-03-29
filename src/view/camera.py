@@ -132,7 +132,7 @@ class Camera(tk.Frame):
 
     # temp funtion show video/camera ==================================================
     def update_frame(self):
-        """Hiển thị video từ camera"""
+"""Hiển thị video từ camera"""
         ret, frame = self.cap.read()
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
