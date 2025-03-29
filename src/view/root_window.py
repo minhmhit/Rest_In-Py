@@ -5,7 +5,8 @@ from checkout import Checkout
 from customer import Customer
 from login_page import LoginPage
 from settings import Settings
-from tab4 import Tab4
+from revenue import Revenue
+from customer_information import CustomerInfo
 
 # main window
 root = tk.Tk()
@@ -16,7 +17,7 @@ root.configure(bg="#3B82F6")
 appbar = tk.Frame(root, bg="#3B82F6", height=50)
 title = tk.Label(
     appbar,
-    text="Quan Li Khach Tro",
+    text="Quản Lí Nhà Trọ",
     bg="#3B82F6",
     fg="white",
     font=("Arial", 16, "bold"),
@@ -29,6 +30,8 @@ buttons = []
 # dictionary to store tab frames
 tabs = {}
 
+# share customer information from customer.py -> checkout.py
+customer_controller = CustomerInfo
 
 # main function
 def show_main():
@@ -41,9 +44,9 @@ def show_main():
     global tabs
     tabs = {
         "Camera": Camera(root),
-        "Thanh Toán": Checkout(root),
-        "Danh Sach Thue": Customer(root),
-        "Tab 4": Tab4(root),
+        "Thanh Toán": Checkout(root,customer_controller),
+        "Danh Sách Thuê": Customer(root,show_tab,customer_controller),
+        "Doanh thu": Revenue(root),
         "Cài Đặt": Settings(root),
     }
 
