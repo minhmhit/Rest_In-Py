@@ -61,8 +61,7 @@ def generate_comprehensive_sql_script():
         print(f"Đã sinh file SQL chi tiết: {script_path}")
 
 init_db()
-# generate_comprehensive_sql_script()   chạy func này để tạo sql
-
+# generate_comprehensive_sql_script()  
 #xuất data
 __all__ = ["Session", "get_database_url", "generate_comprehensive_sql_script", "engine"]
 

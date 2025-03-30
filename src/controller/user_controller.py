@@ -7,7 +7,7 @@ from model import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def create_user(username, password, role):
+def create_user(username, password, role,tenant_id=None):
    
     session = Session()
     try:

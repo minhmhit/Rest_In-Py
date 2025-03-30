@@ -2,23 +2,30 @@ from database import Session
 from model import Bill, Tenant, Room, Service, BillService
 import datetime
 
-def create_bill(tenant_id, services_list):
+def create_bill(room_id, services_list):
    
     session = Session()
-    tenant = session.query(Tenant).filter_by(id=tenant_id).first()
-    if tenant:
-        room = tenant.room
-        total_amount = room.price  
-        for service_id in services_list: 
+    room = session.query(Room).filter_by(id=room_id).first()
+    if room:
+        tenants = room.tenants
+        if not tenants:
+            raise ValueError("Phòng không có khách thuê")
+        
+        total_amount = room.price
+        for service_id in services_list:
             service = session.query(Service).filter_by(id=service_id).first()
             if service:
                 total_amount += service.price
-        new_bill = Bill(
-            tenant_id=tenant_id, 
-            room_id=room.id, 
-            total_amount=total_amount,
-            created_at=datetime.datetime.now(datetime.UTC) 
-        )
+                
+        amount_per_tenant = total_amount / len(tenants)
+        for tenant in tenants:
+            new_bill = Bill(
+                tenant_id=tenant.id, 
+                room_id=room.id, 
+                total_amount=amount_per_tenant,  
+                created_at=datetime.datetime.now(datetime.UTC)
+            )
+            
         session.add(new_bill)
         session.commit()
        
