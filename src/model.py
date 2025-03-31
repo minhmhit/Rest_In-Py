@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     password = Column(String(100), nullable=False)
     role = Column(String(10), nullable=False)
+    tenant_id = Column(Integer, ForeignKey('tenants.id'))
 
 class Room(Base):
     __tablename__ = 'rooms'
@@ -30,6 +31,7 @@ class Tenant(Base):
     image_path = Column(String(200))
     move_in_date = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     room_id = Column(Integer, ForeignKey('rooms.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
     bills = relationship('Bill', backref='tenant', lazy=True)
 
 class Service(Base):

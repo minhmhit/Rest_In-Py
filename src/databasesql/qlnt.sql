@@ -19,15 +19,6 @@ CREATE TABLE services (
     price FLOAT NOT NULL
 );
 
--- Bảng users
-DROP TABLE IF EXISTS users;
-CREATE TABLE users (
-    id INTEGER NOT NULL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(100) NOT NULL,
-    role VARCHAR(10) NOT NULL
-);
-
 -- Bảng tenants
 DROP TABLE IF EXISTS tenants;
 CREATE TABLE tenants (
@@ -37,7 +28,18 @@ CREATE TABLE tenants (
     identity_number VARCHAR(20) UNIQUE,
     image_path VARCHAR(200),
     move_in_date DATETIME,
-    room_id INTEGER NOT NULL REFERENCES rooms.id
+    room_id INTEGER NOT NULL REFERENCES rooms.id,
+    user_id INTEGER REFERENCES users.id
+);
+
+-- Bảng users
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+    id INTEGER NOT NULL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    role VARCHAR(10) NOT NULL,
+    tenant_id INTEGER REFERENCES tenants.id
 );
 
 -- Bảng bills
