@@ -35,7 +35,7 @@ class Camera(tk.Frame):
         # configure weights
         self.columnconfigure(0, weight=2)  # Left panel 2/8
         self.columnconfigure(1, weight=6)  # Main panel 6/8
-        self.rowconfigure(0, weight=1)  # Ensure row expands
+        self.rowconfigure(0, weight=1)  
 
         # place LabelFrames
         self.leftPanel.grid(row=0, column=0, sticky="nsew")

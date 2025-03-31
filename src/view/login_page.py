@@ -60,10 +60,10 @@ class LoginPage(tk.Frame):
         password = self.entry_password.get()
         
         if username == "1" and password == "1":
-            messagebox.showinfo("Login Successful", "Welcome!")
+            messagebox.showinfo("Dang Nhap Thanh Cong", f"Xin Chao {username}!")
             self.show_main()  # Switch to the main application
         else:
-            messagebox.showerror("Login Failed", "Invalid username or password")
+            messagebox.showerror("Dang Nhap That Bai", "Tai Khoan Hay Mat Khau Khong Hop Le")
             self.entry_username.delete(0, tk.END)
             self.entry_password.delete(0, tk.END)
             self.restore_placeholder(self.entry_username, "Enter your username...")

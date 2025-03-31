@@ -13,6 +13,7 @@ class Customer(tk.Frame):
         # self.customer_controller = controller
         self.controller = controller
 
+        # id - name - sex - birthday - national - country - checkin_date - room_type
         self.customer_list = [
             (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An","16/08/2005","VIP"),
             (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh","20/02/2015","Thường"),
