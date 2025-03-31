@@ -18,7 +18,7 @@ class Customer(tk.Frame):
             (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An","16/08/2005","VIP"),
             (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh","20/02/2015","Thường"),
             (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh","10/02/2010","VIP"),
-            # (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi"),
+            (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi","14/11/2018","Thường"),
             # (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu"),
             # (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong"),
             # (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Việt Nam"),
@@ -194,8 +194,43 @@ class Customer(tk.Frame):
         submit_btn = tk.Button(add_window, text="Submit", command=submit)
         submit_btn.grid(row=len(fields), columnspan=2, pady=10)
 
+    # def change_customer_information(self):
+    #     print()
+
     def change_customer_information(self):
-        print()
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để chỉnh sửa")
+            return
+
+        item_values = self.tree.item(selected_item[0])['values']
+        edit_window = tk.Toplevel(self)
+        edit_window.title("Chỉnh sửa thông tin khách hàng")
+        edit_window.geometry("350x400")
+
+        fields = [
+            "ID", "Họ Tên", "Giới Tính", "Ngày Sinh", "Quốc Tịch", "Quê Quán", "Ngày Thuê Phòng", "Loại Phòng"
+        ]
+        entries = {}
+
+        for i, (field, value) in enumerate(zip(fields, item_values)):
+            tk.Label(edit_window, text=field).grid(row=i, column=0, padx=5, pady=5)
+            entry = tk.Entry(edit_window)
+            entry.insert(0, value)
+            entry.grid(row=i, column=1, padx=5, pady=5)
+            entries[field] = entry
+
+        def save_changes():
+            new_values = tuple(entry.get() for entry in entries.values())
+            self.tree.item(selected_item[0], values=new_values)
+            for index, customer in enumerate(self.customer_list):
+                if customer[0] == item_values[0]:  # Update correct customer by ID
+                    self.customer_list[index] = new_values
+                    break
+            edit_window.destroy()
+
+        save_btn = tk.Button(edit_window, text="Lưu", command=save_changes)
+        save_btn.grid(row=len(fields), columnspan=2, pady=10)
 
     # def customer_payment(self):
     #     selected_item = self.tree.selection()

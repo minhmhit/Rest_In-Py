@@ -4,7 +4,7 @@ from tkinter import messagebox
 
 class Checkout(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, bg="#f5f5f5")  # gray background
+        super().__init__(parent, bg="#f5f5f5")  # Light gray background
         self.price_per_day = {"VIP": 400000, "Normal": 250000}
         self.controller = controller
 
@@ -25,29 +25,48 @@ class Checkout(tk.Frame):
         self.rightPanel.grid(row=0, column=2, sticky="nsew")
 
         # Title
-        self.customer_info_label = tk.Label(
-            self.mainPanel, text="Thông tin khách hàng", font=("Arial", 24, "bold"), bg="white"
+        self.invoice_label = tk.Label(
+            self.mainPanel, text="Hóa Đơn", font=("Arial", 24, "bold"), bg="white"
         )
-        self.customer_info_label.pack(pady=10)
+        self.invoice_label.pack(pady=10)
 
         # Customer Info Frame
         self.info_frame = tk.Frame(self.mainPanel, bg="#e0e0e0", padx=15, pady=15)
         self.info_frame.pack(fill="x", padx=10, pady=5)
-        
-        self.info_text = tk.Label(self.info_frame, font=("Arial", 16), text="", justify="left", bg="#e0e0e0", anchor="w")
-        self.info_text.pack(fill="x")
 
-        # Dates
-        date_frame = tk.Frame(self.mainPanel, bg="white")
-        date_frame.pack(fill="x", padx=10, pady=10)
+        tk.Label(self.info_frame, text="  Thông Tin Khách Hàng", font=("Arial", 18, "bold"), bg="#e0e0e0").grid(row=0, columnspan=2, pady=5)
         
-        tk.Label(date_frame, text="Ngày nhận phòng:", font=("Arial", 14), bg="white").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.checkin_date = tk.Label(date_frame, bg="white", font=("Arial", 14))
-        self.checkin_date.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        self.labels = {}
+        fields = [
+            ("Họ tên", "name"),
+            ("Giới tính", "sex"),
+            ("Ngày sinh", "birthday"),
+            ("Quốc tịch", "national"),
+            ("Quê quán", "country"),
+        ]
+
+        for i, (title, field) in enumerate(fields):
+            tk.Label(self.info_frame, text=title + ":", font=("Arial", 14, "bold"), bg="#e0e0e0").grid(row=i+1, column=0, sticky="w", padx=5, pady=2)
+            self.labels[field] = tk.Label(self.info_frame, text="", font=("Arial", 14), bg="#e0e0e0")
+            self.labels[field].grid(row=i+1, column=1, sticky="w", padx=5, pady=2)
+
+        # Room Details Frame
+        self.room_frame = tk.Frame(self.mainPanel, bg="#e0e0e0", padx=15, pady=15)
+        self.room_frame.pack(fill="x", padx=10, pady=5)
+
+        tk.Label(self.room_frame, text="Chi Tiết Phòng Thuê", font=("Arial", 18, "bold"), bg="#e0e0e0").grid(row=0, columnspan=2, pady=5)
         
-        tk.Label(date_frame, text="Ngày trả phòng:", font=("Arial", 14), bg="white").grid(row=1, column=0, sticky="w", padx=5, pady=5)
-        self.checkout_date = tk.Label(date_frame, bg="white", font=("Arial", 14))
-        self.checkout_date.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        tk.Label(self.room_frame, text="Loại phòng:", font=("Arial", 14, "bold"), bg="#e0e0e0").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        self.labels["room_type"] = tk.Label(self.room_frame, text="", font=("Arial", 14), bg="#e0e0e0")
+        self.labels["room_type"].grid(row=1, column=1, sticky="w", padx=5, pady=2)
+
+        tk.Label(self.room_frame, text="Ngày nhận phòng:", font=("Arial", 14, "bold"), bg="#e0e0e0").grid(row=2, column=0, sticky="w", padx=5, pady=2)
+        self.checkin_date = tk.Label(self.room_frame, bg="#e0e0e0", font=("Arial", 14))
+        self.checkin_date.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        
+        tk.Label(self.room_frame, text="Ngày trả phòng:", font=("Arial", 14, "bold"), bg="#e0e0e0").grid(row=3, column=0, sticky="w", padx=5, pady=2)
+        self.checkout_date = tk.Label(self.room_frame, bg="#e0e0e0", font=("Arial", 14))
+        self.checkout_date.grid(row=3, column=1, sticky="w", padx=5, pady=2)
 
         # Result
         self.result_label = tk.Label(self.mainPanel, text="", font=("Arial", 18, "bold"), fg="green", bg="white")
@@ -62,18 +81,17 @@ class Checkout(tk.Frame):
 
     def load_customer_info(self):
         customer_data = self.controller
-        if not customer_data or self.info_text["text"] == "":
-            self.info_text.config(text="Không có dữ liệu khách hàng.")
+        if not customer_data:
+            for field in self.labels:
+                self.labels[field].config(text="Không có dữ liệu")
             return
         
-        info_text = f"Họ tên: {customer_data.name}\nGiới tính: {customer_data.sex}\n"
-        info_text += f"Ngày sinh: {customer_data.birthday}\nQuốc tịch: {customer_data.national}\n"
-        info_text += f"Quê quán: {customer_data.country}\nLoại phòng: {customer_data.room_type}"
+        for field in self.labels:
+            self.labels[field].config(text=getattr(customer_data, field, ""))
         
-        self.info_text.config(text=info_text)
         self.checkin_date.config(text=customer_data.checkin_date)
         self.checkout_date.config(text=datetime.today().strftime("%d/%m/%Y"))
-        self.result_label.config(text=f"Tổng tiền: {self.calculate_room_cost(customer_data.checkin_date, customer_data.room_type)} VND")
+        self.result_label.config(text=f"Tổng tiền: {self.calculate_room_cost(customer_data.checkin_date, customer_data.room_type)}")
     
     def calculate_room_cost(self, checkin_date, room_type):
         try:
@@ -82,7 +100,7 @@ class Checkout(tk.Frame):
             if checkout < checkin:
                 raise ValueError("Ngày trả phòng không hợp lệ.")
             duration = (checkout - checkin).days
-            room_rate = self.price_per_day.get(room_type, 250000)
+            room_rate = self.price_per_day.get(room_type, 250000)  # Default to normal room rate
             return duration * room_rate
         except ValueError:
             return 0
