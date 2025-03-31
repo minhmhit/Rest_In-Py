@@ -191,11 +191,8 @@ class Customer(tk.Frame):
             self.tree.insert("", "end", values=new_customer)
             add_window.destroy()
 
-        submit_btn = tk.Button(add_window, text="Submit", command=submit)
+        submit_btn = tk.Button(add_window, text="Lưu", command=submit)
         submit_btn.grid(row=len(fields), columnspan=2, pady=10)
-
-    # def change_customer_information(self):
-    #     print()
 
     def change_customer_information(self):
         selected_item = self.tree.selection()
@@ -232,20 +229,6 @@ class Customer(tk.Frame):
         save_btn = tk.Button(edit_window, text="Lưu", command=save_changes)
         save_btn.grid(row=len(fields), columnspan=2, pady=10)
 
-    # def customer_payment(self):
-    #     selected_item = self.tree.selection()
-    #     if not selected_item:
-    #         messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để thanh toán")
-    #         return
-    #
-    #     item_values = self.tree.item(selected_item)["values"]
-    #     checkin_date = item_values[6]  # Ngày thuê phòng từ danh sách
-    #     today = datetime.today().strftime("%d/%m/%Y")
-    #
-    #     # get data
-    #     self.customer_controller = CustomerInfo
-    #     self.show_tab("Thanh Toán")
-
     def remove_customer(self):
         selected_item = self.tree.selection()
         if not selected_item:
@@ -262,25 +245,6 @@ class Customer(tk.Frame):
         ]
         self.tree.delete(selected_item)
         
-    # def sent_data_to_checkout(self):
-    #     selected_item = self.tree.selection()
-    #     if selected_item:
-    #         item_values = self.tree.item(selected_item)["values"]
-    #         try:
-    #             # set data to shared class
-    #             self.controller.customer_controller.id = item_values[0]
-    #             self.controller.customer_controller.name = item_values[1]
-    #             self.controller.customer_controller.sex = item_values[2]
-    #             self.controller.customer_controller.birthday = item_values[3]
-    #             self.controller.customer_controller.national = item_values[4]
-    #             self.controller.customer_controller.country = item_values[5]
-    #             self.controller.customer_controller.checkin_date = item_values[6]
-    #             self.controller.customer_controller.room_type = item_values[7]
-    #         except ValueError:
-    #             print("Invalid datetime format in Treeview.")
-    #     else:
-    #         print("No item selected.")
-
     def sent_data_to_checkout(self):
         selected_item = self.tree.selection()
 
@@ -294,7 +258,6 @@ class Customer(tk.Frame):
                 self.controller.national = item_values[4]
                 self.controller.country = item_values[5]
                 self.controller.checkin_date = item_values[6]
-                # self.controller.checkin_date = datetime.strptime(checkin_date, "%Y-%m-%d %H:%M:%S")
                 self.controller.room_type = item_values[7]
                 self.show_tab("Thanh Toán")
         

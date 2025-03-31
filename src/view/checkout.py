@@ -26,7 +26,7 @@ class Checkout(tk.Frame):
 
         # Title
         self.invoice_label = tk.Label(
-            self.mainPanel, text="Hóa Đơn", font=("Arial", 24, "bold"), bg="white"
+            self.mainPanel, text="Hóa Đơn", font=("Arial", 34, "bold"), bg="white"
         )
         self.invoice_label.pack(pady=10)
 
@@ -79,21 +79,48 @@ class Checkout(tk.Frame):
         )
         self.calculate_btn.pack(pady=10)
 
+    # def load_customer_info(self):
+    #     customer_data = self.controller
+    #     if not customer_data or customer_data.isNotNull:
+    #         for field in self.labels:
+    #             self.labels[field].config(text="Không có dữ liệu")
+    #         return
+    #
+    #     for field in self.labels:
+    #         value = getattr(customer_data, field, "")
+    #         if value:
+    #             self.labels[field].config(text=value)
+    #
+    #     if customer_data.checkin_date:
+    #         self.checkin_date.config(text=customer_data.checkin_date)
+    #
+    #     self.checkout_date.config(text=datetime.today().strftime("%d/%m/%Y"))
+    #     self.result_label.config(text=f"Tổng tiền: {self.calculate_room_cost(customer_data.checkin_date, customer_data.room_type)} VND")
+
     def load_customer_info(self):
         customer_data = self.controller
         if not customer_data:
-            for field in self.labels:
-                self.labels[field].config(text="Không có dữ liệu")
+            messagebox.showwarning("Cảnh báo", "Không có dữ liệu khách hàng")
             return
         
         for field in self.labels:
-            self.labels[field].config(text=getattr(customer_data, field, ""))
+            value = getattr(customer_data, field, "")
+            self.labels[field].config(text=value if value else "Không có dữ liệu")
         
-        self.checkin_date.config(text=customer_data.checkin_date)
+        if customer_data.getCheckinDate:
+            self.checkin_date.config(text=customer_data.checkin_date)
+        else:
+            messagebox.showwarning("Cảnh báo", "Ngày nhận phòng không có dữ liệu")
+            self.checkout_date.config(text="Không có dữ liệu khách hàng")
+            self.result_label.config(text="Không có dữ liệu khách hàng")
+            return
+        
         self.checkout_date.config(text=datetime.today().strftime("%d/%m/%Y"))
-        self.result_label.config(text=f"Tổng tiền: {self.calculate_room_cost(customer_data.checkin_date, customer_data.room_type)}")
+        self.result_label.config(text=f"Tổng tiền: {self.calculate_room_cost(customer_data.checkin_date, customer_data.room_type)} VND")
     
     def calculate_room_cost(self, checkin_date, room_type):
+        if checkin_date is None:
+            return 0
         try:
             checkin = datetime.strptime(checkin_date, "%d/%m/%Y")
             checkout = datetime.today()

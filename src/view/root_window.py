@@ -31,7 +31,7 @@ buttons = []
 tabs = {}
 
 # share customer information from customer.py -> checkout.py
-customer_controller = CustomerInfo
+customer_controller = CustomerInfo()
 
 # main function
 def show_main():

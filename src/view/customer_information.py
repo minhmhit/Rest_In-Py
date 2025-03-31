@@ -1,5 +1,5 @@
 class CustomerInfo:
-    def __init__(self,id,name,sex,birthday,national,country,checkin_date,room_type):
+    def __init__(self,id=None,name=None,sex=None,birthday=None,national=None,country=None,checkin_date=None,room_type=None):
         self.id = id
         self.name = name
         self.sex = sex
