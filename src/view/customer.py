@@ -19,72 +19,72 @@ class Customer(tk.Frame):
             (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh","20/02/2015","Thường"),
             (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh","10/02/2010","VIP"),
             (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi","14/11/2018","Thường"),
-            # (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu"),
-            # (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong"),
-            # (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Việt Nam"),
-            # (8, "Vũ Ngọc Linh", "Nữ", "1991-06-25", "Việt Nam", "Việt Nam"),
-            # (9, "Đoàn Văn Hải", "Nam", "1984-03-17", "Việt Nam", "Việt Nam"),
-            # (10, "Lý Thu Trang", "Nữ", "1993-09-29", "Việt Nam", "Việt Nam"),
-            # (11, "Phan Thanh Nam", "Nam", "1996-02-10", "Việt Nam", "Việt Nam"),
-            # (12, "Ngô Thị Mai", "Nữ", "1990-07-05", "Việt Nam", "Việt Nam"),
-            # (13, "Trịnh Quốc Đạt", "Nam", "1982-12-20", "Việt Nam", "Việt Nam"),
-            # (14, "Tạ Kim Oanh", "Nữ", "1999-01-14", "Việt Nam", "Việt Nam"),
-            # (15, "Dương Hữu Phúc", "Nam", "1994-05-23", "Việt Nam", "Việt Nam"),
-            # (16, "Hồ Minh Đức", "Nam", "1997-11-30", "Việt Nam", "Việt Nam"),
-            # (17, "Lâm Thị Lan", "Nữ", "1986-08-18", "Việt Nam", "Việt Nam"),
-            # (18, "Trần Gia Bảo", "Nam", "1995-09-08", "Việt Nam", "Việt Nam"),
-            # (
-            #     19,
-            #     "Nguyễn Hồng Nhung",
-            #     "Nữ",
-            #     "1998-04-21",
-            #     "Việt Nam",
-            #     "Việt Nam",
-            # ),
-            # (
-            #     20,
-            #     "Lương Quang Hải",
-            #     "Nam",
-            #     "1980-10-10",
-            #     "Việt Nam",
-            #     "Việt Nam",
-            # ),
-            # (21, "Mai Thị Hạnh", "Nữ", "1992-06-12", "Việt Nam", "Việt Nam"),
-            # (
-            #     22,
-            #     "Phùng Văn Thịnh",
-            #     "Nam",
-            #     "1983-03-04",
-            #     "Việt Nam",
-            #     "Việt Nam",
-            # ),
-            # (
-            #     23,
-            #     "Nguyễn Thanh Hương",
-            #     "Nữ",
-            #     "1997-07-27",
-            #     "Việt Nam",
-            #     "Việt Nam",
-            # ),
-            # (24, "Đỗ Trọng Khang", "Nam", "1991-09-15", "Việt Nam", "Việt Nam"),
-            # (25, "Hoàng Mỹ Linh", "Nữ", "1988-11-09", "Việt Nam", "Việt Nam"),
-            # (
-            #     26,
-            #     "Trịnh Minh Tuấn",
-            #     "Nam",
-            #     "1996-12-01",
-            #     "Việt Nam",
-            #     "Việt Nam",
-            # ),
-            # (27, "Bùi Hải Yến", "Nữ", "1994-05-07", "Việt Nam", "Việt Nam"),
-            # (28, "Lê Tấn Tài", "Nam", "1985-01-19", "Việt Nam", "Việt Nam"),
-            # (29, "Vương Phúc An", "Nam", "1999-10-22", "Việt Nam", "Việt Nam"),
-            # (30, "Đặng Quỳnh Hoa", "Nữ", "1993-07-13", "Việt Nam", "Việt Nam"),
+            (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu","01/01/2020","Thường"),
+            (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong","20/02/2015","Thường"),
+            (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (8, "Vũ Ngọc Linh", "Nữ", "1991-06-25", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (9, "Đoàn Văn Hải", "Nam", "1984-03-17", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (10, "Lý Thu Trang", "Nữ", "1993-09-29", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (11, "Phan Thanh Nam", "Nam", "1996-02-10", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (12, "Ngô Thị Mai", "Nữ", "1990-07-05", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (13, "Trịnh Quốc Đạt", "Nam", "1982-12-20", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (14, "Tạ Kim Oanh", "Nữ", "1999-01-14", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (15, "Dương Hữu Phúc", "Nam", "1994-05-23", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (16, "Hồ Minh Đức", "Nam", "1997-11-30", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (17, "Lâm Thị Lan", "Nữ", "1986-08-18", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (18, "Trần Gia Bảo", "Nam", "1995-09-08", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (
+                19,
+                "Nguyễn Hồng Nhung",
+                "Nữ",
+                "1998-04-21",
+                "Việt Nam",
+                "Việt Nam","20/02/2015","Thường"
+            ),
+            (
+                20,
+                "Lương Quang Hải",
+                "Nam",
+                "1980-10-10",
+                "Việt Nam",
+                "Việt Nam","20/02/2015","Thường"
+            ),
+            (21, "Mai Thị Hạnh", "Nữ", "1992-06-12", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (
+                22,
+                "Phùng Văn Thịnh",
+                "Nam",
+                "1983-03-04",
+                "Việt Nam",
+                "Việt Nam","20/02/2015","Thường"
+            ),
+            (
+                23,
+                "Nguyễn Thanh Hương",
+                "Nữ",
+                "1997-07-27",
+                "Việt Nam",
+                "Việt Nam","20/02/2015","Thường"
+            ),
+            (24, "Đỗ Trọng Khang", "Nam", "1991-09-15", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (25, "Hoàng Mỹ Linh", "Nữ", "1988-11-09", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (
+                26,
+                "Trịnh Minh Tuấn",
+                "Nam",
+                "1996-12-01",
+                "Việt Nam",
+                "Việt Nam","20/02/2015","Thường"
+            ),
+            (27, "Bùi Hải Yến", "Nữ", "1994-05-07", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (28, "Lê Tấn Tài", "Nam", "1985-01-19", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (29, "Vương Phúc An", "Nam", "1999-10-22", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
+            (30, "Đặng Quỳnh Hoa", "Nữ", "1993-07-13", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
         ]
 
         # Create panels
         self.mainPanel = tk.LabelFrame(
-            self, text="Danh sách khách hàng", bg="white"
+            self, text="Danh sách khách hàng", bg="white", font=("Arial", 12, "bold")
         )
         self.functionPanel = tk.LabelFrame(self, bg="lightgray")
 
@@ -173,7 +173,7 @@ class Customer(tk.Frame):
             "Giới Tính",
             "Ngày Sinh",
             "Quốc Tịch",
-            "Quê Quán",
+            "Quê Quán","Ngày Thuê Phòng", "Loại Phòng",
         ]
         entries = {}
 
@@ -189,6 +189,11 @@ class Customer(tk.Frame):
             new_customer = tuple(entry.get() for entry in entries.values())
             self.customer_list.append(new_customer)
             self.tree.insert("", "end", values=new_customer)
+            
+            # move new customer to the top of table
+            last_insert_customer = self.tree.insert("", "end", values=new_customer)
+            self.tree.move(last_insert_customer, "", 0)
+            
             add_window.destroy()
 
         submit_btn = tk.Button(add_window, text="Lưu", command=submit)
@@ -206,7 +211,7 @@ class Customer(tk.Frame):
         edit_window.geometry("350x400")
 
         fields = [
-            "ID", "Họ Tên", "Giới Tính", "Ngày Sinh", "Quốc Tịch", "Quê Quán", "Ngày Thuê Phòng", "Loại Phòng"
+            "ID", "Họ Tên", "Giới Tính", "Ngày Sinh", "Quốc Tịch", "Quê Quán", "Ngày Thuê Phòng", "Loại Phòng",
         ]
         entries = {}
 
