@@ -1,8 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
-
 from customer_information import CustomerInfo
+
+from tkcalendar import Calendar
 
 color1 = "#3B82F6"
 
@@ -10,7 +11,6 @@ class Customer(tk.Frame):
     def __init__(self, parent,show_tab,controller):
         super().__init__(parent, bg="#F5F5F5")
         self.show_tab = show_tab
-        # self.customer_controller = controller
         self.controller = controller
 
         # id - name - sex - birthday - national - country - checkin_date - room_type
@@ -185,10 +185,49 @@ class Customer(tk.Frame):
             entry.grid(row=i, column=1, padx=5, pady=5)
             entries[field] = entry
 
+        def prevent_keyboard_input(event):
+            return "break"  # Prevents the default key press action
+
+        # bind readonly event Entry
+        entries["Ngày Thuê Phòng"].bind("<Key>", prevent_keyboard_input) # bind event
+
+        def open_calendar():
+            def select_date():
+                selected_date = cal.get_date()  # Get selected date
+                entries["Ngày Thuê Phòng"].delete(0, tk.END)  # Clear previous value
+                entries["Ngày Thuê Phòng"].insert(0, datetime.strptime(selected_date, "%d/%m/%Y").strftime("%d/%m/%Y"))
+                top.destroy()  # Close the calendar window
+
+            # Create a new top-level window for the calendar
+            top = tk.Toplevel(self)
+            top.title("Choose a Date")
+
+            # Calendar widget
+            cal = Calendar(top, date_pattern="dd/MM/yyyy")
+            cal.pack(pady=10)
+
+            # Confirm button
+            btn_select = tk.Button(top, text="Confirm", command=select_date)
+            btn_select.pack(pady=5)
+
+        # choose date button
+        choose_date = tk.Button(add_window,text="Checkin Date",command=open_calendar)
+        choose_date.grid(row=6,column=2)
+
+        # room type combobox
+        combobox_items = ["Thường", "VIP"]
+        combobox = ttk.Combobox(add_window, values=combobox_items)
+        combobox.current(0) # default data
+        combobox.grid(row=7,column=1) # replace normal Entry text
+
         def submit():
+            # get data from combobox
+            entries["Loại Phòng"].delete(0, tk.END)
+            entries["Loại Phòng"].insert(0, combobox.get())
+
+            # add new customer to customer_list
             new_customer = tuple(entry.get() for entry in entries.values())
             self.customer_list.append(new_customer)
-            self.tree.insert("", "end", values=new_customer)
             
             # move new customer to the top of table
             last_insert_customer = self.tree.insert("", "end", values=new_customer)
@@ -221,6 +260,44 @@ class Customer(tk.Frame):
             entry.insert(0, value)
             entry.grid(row=i, column=1, padx=5, pady=5)
             entries[field] = entry
+
+        def prevent_keyboard_input(event):
+            return "break"  # Prevents the default key press action
+
+        # bind readonly event Entry
+        entries["Ngày Thuê Phòng"].bind("<Key>", prevent_keyboard_input) # bind event
+
+        def open_calendar():
+            def select_date():
+                selected_date = cal.get_date()  # Get selected date
+                entries["Ngày Thuê Phòng"].delete(0, tk.END)  # Clear previous value
+                entries["Ngày Thuê Phòng"].insert(0, datetime.strptime(selected_date, "%d/%m/%Y").strftime("%d/%m/%Y"))
+                top.destroy()  # Close the calendar window
+
+            # Create a new top-level window for the calendar
+            top = tk.Toplevel(self)
+            top.title("Choose a Date")
+
+            # Calendar widget
+            cal = Calendar(top, date_pattern="dd/MM/yyyy")
+            cal.pack(pady=10)
+
+            # Confirm button
+            btn_select = tk.Button(top, text="Confirm", command=select_date)
+            btn_select.pack(pady=5)
+
+        def get_current_combobox(room_type):
+            return 0 if room_type == "Thường" else 1
+
+        # choose date button
+        choose_date = tk.Button(edit_window,text="Checkin Date",command=open_calendar)
+        choose_date.grid(row=6,column=2)
+
+        # room type combobox
+        combobox_items = ["Thường", "VIP"]
+        combobox = ttk.Combobox(edit_window, values=combobox_items)
+        combobox.current(get_current_combobox(entries["Loại Phòng"].get())) # current data
+        combobox.grid(row=7,column=1) # replace normal Entry text
 
         def save_changes():
             new_values = tuple(entry.get() for entry in entries.values())
