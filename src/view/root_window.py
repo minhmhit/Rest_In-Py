@@ -96,5 +96,5 @@ try:
     root.mainloop()
 
 # handling error exception
-except mysql.connector.errors.DatabaseError as e:
-    messagebox.showerror("Connect Database Before Run App!")
+except mysql.connector.Error as e:
+    messagebox.showerror("Database Error", "Connect To MySQL Before Run App!")
