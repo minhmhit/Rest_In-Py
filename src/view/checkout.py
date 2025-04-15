@@ -107,7 +107,7 @@ class Checkout(tk.Frame):
             value = getattr(customer_data, field, "")
             self.labels[field].config(text=value if value else "Không có dữ liệu")
         
-        if customer_data.getCheckinDate:
+        if customer_data.checkin_date:
             self.checkin_date.config(text=customer_data.checkin_date)
         else:
             messagebox.showwarning("Cảnh báo", "Ngày nhận phòng không có dữ liệu")
@@ -118,11 +118,24 @@ class Checkout(tk.Frame):
         self.checkout_date.config(text=datetime.today().strftime("%d/%m/%Y"))
         self.result_label.config(text=f"Tổng tiền: {self.calculate_room_cost(customer_data.checkin_date, customer_data.room_type)} VND")
     
+    # def calculate_room_cost(self, checkin_date, room_type):
+    #     if checkin_date is None:
+    #         return 0
+    #     try:
+    #         checkin = datetime.strptime(checkin_date, "%d/%m/%Y")
+    #         checkout = datetime.today()
+    #         if checkout < checkin:
+    #             raise ValueError("Ngày trả phòng không hợp lệ.")
+    #         duration = (checkout - checkin).days
+    #         room_rate = self.price_per_day.get(room_type, 250000)  # Default to normal room rate
+    #         return duration * room_rate
+    #     except ValueError:
+    #         return 0
     def calculate_room_cost(self, checkin_date, room_type):
         if checkin_date is None:
             return 0
         try:
-            checkin = datetime.strptime(checkin_date, "%d/%m/%Y")
+            checkin = datetime.strptime(checkin_date, "%Y-%m-%d")
             checkout = datetime.today()
             if checkout < checkin:
                 raise ValueError("Ngày trả phòng không hợp lệ.")

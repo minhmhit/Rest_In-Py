@@ -5,82 +5,17 @@ from customer_information import CustomerInfo
 
 from tkcalendar import Calendar
 
+from database import DB_Connector
+
 color1 = "#3B82F6"
 
 class Customer(tk.Frame):
-    def __init__(self, parent,show_tab,controller):
+    def __init__(self, parent,show_tab,controller,customer_list,db_conn: DB_Connector):
         super().__init__(parent, bg="#F5F5F5")
         self.show_tab = show_tab
         self.controller = controller
-
-        # id - name - sex - birthday - national - country - checkin_date - room_type
-        self.customer_list = [
-            (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An","16/08/2005","VIP"),
-            (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh","20/02/2015","Thường"),
-            (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh","10/02/2010","VIP"),
-            (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi","14/11/2018","Thường"),
-            (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu","01/01/2020","Thường"),
-            (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong","20/02/2015","Thường"),
-            (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (8, "Vũ Ngọc Linh", "Nữ", "1991-06-25", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (9, "Đoàn Văn Hải", "Nam", "1984-03-17", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (10, "Lý Thu Trang", "Nữ", "1993-09-29", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (11, "Phan Thanh Nam", "Nam", "1996-02-10", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (12, "Ngô Thị Mai", "Nữ", "1990-07-05", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (13, "Trịnh Quốc Đạt", "Nam", "1982-12-20", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (14, "Tạ Kim Oanh", "Nữ", "1999-01-14", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (15, "Dương Hữu Phúc", "Nam", "1994-05-23", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (16, "Hồ Minh Đức", "Nam", "1997-11-30", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (17, "Lâm Thị Lan", "Nữ", "1986-08-18", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (18, "Trần Gia Bảo", "Nam", "1995-09-08", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (
-                19,
-                "Nguyễn Hồng Nhung",
-                "Nữ",
-                "1998-04-21",
-                "Việt Nam",
-                "Việt Nam","20/02/2015","Thường"
-            ),
-            (
-                20,
-                "Lương Quang Hải",
-                "Nam",
-                "1980-10-10",
-                "Việt Nam",
-                "Việt Nam","20/02/2015","Thường"
-            ),
-            (21, "Mai Thị Hạnh", "Nữ", "1992-06-12", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (
-                22,
-                "Phùng Văn Thịnh",
-                "Nam",
-                "1983-03-04",
-                "Việt Nam",
-                "Việt Nam","20/02/2015","Thường"
-            ),
-            (
-                23,
-                "Nguyễn Thanh Hương",
-                "Nữ",
-                "1997-07-27",
-                "Việt Nam",
-                "Việt Nam","20/02/2015","Thường"
-            ),
-            (24, "Đỗ Trọng Khang", "Nam", "1991-09-15", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (25, "Hoàng Mỹ Linh", "Nữ", "1988-11-09", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (
-                26,
-                "Trịnh Minh Tuấn",
-                "Nam",
-                "1996-12-01",
-                "Việt Nam",
-                "Việt Nam","20/02/2015","Thường"
-            ),
-            (27, "Bùi Hải Yến", "Nữ", "1994-05-07", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (28, "Lê Tấn Tài", "Nam", "1985-01-19", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (29, "Vương Phúc An", "Nam", "1999-10-22", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-            (30, "Đặng Quỳnh Hoa", "Nữ", "1993-07-13", "Việt Nam", "Việt Nam","20/02/2015","Thường"),
-        ]
+        self.customer_list = customer_list
+        self.db_conn = db_conn
 
         # Create panels
         self.mainPanel = tk.LabelFrame(
@@ -104,6 +39,7 @@ class Customer(tk.Frame):
             "Quê Quán",
             "Ngày Thuê Phòng",
             "Loại Phòng",
+            "Số Phòng",
         )
         self.tree = ttk.Treeview(
             self.mainPanel, columns=columns, show="headings"
@@ -113,8 +49,19 @@ class Customer(tk.Frame):
             self.tree.heading(col, text=col)
             self.tree.column(col, width=120, anchor="center")
 
+        # add data to tree
         for customer in self.customer_list:
-            self.tree.insert("", "end", values=customer)
+            self.tree.insert("", "end", iid=customer.id, values=(
+                customer.id,
+                customer.name,
+                customer.sex,
+                customer.birthday,
+                customer.national,
+                customer.country,
+                customer.checkin_date,
+                customer.room_type,
+                customer.room_number,
+            ))
 
         scrollbar = ttk.Scrollbar(
             self.mainPanel, orient="vertical", command=self.tree.yview
@@ -173,7 +120,10 @@ class Customer(tk.Frame):
             "Giới Tính",
             "Ngày Sinh",
             "Quốc Tịch",
-            "Quê Quán","Ngày Thuê Phòng", "Loại Phòng",
+            "Quê Quán",
+            "Ngày Thuê Phòng", 
+            "Loại Phòng",
+            "Số Phòng"
         ]
         entries = {}
 
@@ -189,54 +139,129 @@ class Customer(tk.Frame):
             return "break"  # Prevents the default key press action
 
         # bind readonly event Entry
+        entries["Ngày Sinh"].bind("<Key>", prevent_keyboard_input) # bind event
+        entries["Ngày Sinh"].config(state="readonly")
         entries["Ngày Thuê Phòng"].bind("<Key>", prevent_keyboard_input) # bind event
+        entries["Ngày Thuê Phòng"].config(state="readonly")
 
-        def open_calendar():
+        def open_rent_date_calendar():
             def select_date():
-                selected_date = cal.get_date()  # Get selected date
-                entries["Ngày Thuê Phòng"].delete(0, tk.END)  # Clear previous value
-                entries["Ngày Thuê Phòng"].insert(0, datetime.strptime(selected_date, "%d/%m/%Y").strftime("%d/%m/%Y"))
-                top.destroy()  # Close the calendar window
+                selected_date_str = cal.get_date()
 
-            # Create a new top-level window for the calendar
-            top = tk.Toplevel(self)
-            top.title("Choose a Date")
+                # No need to parse and reformat if get_date() returns the correct string format
+                entries["Ngày Thuê Phòng"].config(state="normal") # Allow insertion
+                entries["Ngày Thuê Phòng"].delete(0, tk.END)
+                entries["Ngày Thuê Phòng"].insert(0, selected_date_str) # Insert the YYYY-MM-DD string
+                entries["Ngày Thuê Phòng"].config(state="readonly") # Set back to readonly
+                top.destroy()
 
-            # Calendar widget
-            cal = Calendar(top, date_pattern="dd/MM/yyyy")
+            top = tk.Toplevel(add_window) # Make it child of add_window
+            top.title("Chọn Ngày")
+
+            # Calendar widget - CHANGED date_pattern
+            cal = Calendar(top, date_pattern="yyyy-mm-dd", selectmode='day')
             cal.pack(pady=10)
 
             # Confirm button
             btn_select = tk.Button(top, text="Confirm", command=select_date)
             btn_select.pack(pady=5)
 
-        # choose date button
-        choose_date = tk.Button(add_window,text="Checkin Date",command=open_calendar)
-        choose_date.grid(row=6,column=2)
+        def open_birthday_calendar():
+            def select_date():
+                selected_date_str = cal.get_date()
+                entries["Ngày Sinh"].config(state="normal") # Allow insertion
+                entries["Ngày Sinh"].delete(0, tk.END)
+                entries["Ngày Sinh"].insert(0, selected_date_str) # Insert the YYYY-MM-DD string
+                entries["Ngày Sinh"].config(state="readonly") # Set back to readonly
+                top.destroy()
 
-        # room type combobox
+            top = tk.Toplevel(add_window) # Make it child of add_window
+            top.title("Chọn Ngày")
+
+            # Calendar widget - CHANGED date_pattern
+            cal = Calendar(top, date_pattern="yyyy-mm-dd", selectmode='day')
+            cal.pack(pady=10)
+
+            # Confirm button
+            btn_select = tk.Button(top, text="Xác Nhận", command=select_date)
+            btn_select.pack(pady=5)
+
+        # choose date button for "Ngày Sinh"
+        choose_birthday = tk.Button(add_window, text="...", command=open_birthday_calendar)
+        choose_birthday.grid(row=3 ,column=2, padx=(0, 5), pady=5, sticky="w")
+
+        # Choose date button for "Ngày Thuê Phòng"
+        choose_rent_date = tk.Button(add_window, text="...", command=open_rent_date_calendar) 
+        choose_rent_date.grid(row=6, column=2, padx=(0, 5), pady=5, sticky="w") # align right of entry
+
+        # Room type combobox
         combobox_items = ["Thường", "VIP"]
-        combobox = ttk.Combobox(add_window, values=combobox_items)
+        combobox = ttk.Combobox(add_window, values=combobox_items, state="readonly") # Readonly is better
         combobox.current(0) # default data
-        combobox.grid(row=7,column=1) # replace normal Entry text
+
+        # Replace the placeholder Entry for "Loại Phòng"
+        entries["Loại Phòng"].grid_forget() # Remove the temporary entry
+        combobox.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
+        entries["Loại Phòng"] = combobox # Store combobox in entries dict
 
         def submit():
-            # get data from combobox
-            entries["Loại Phòng"].delete(0, tk.END)
-            entries["Loại Phòng"].insert(0, combobox.get())
+            new_customer_values = []
+            for field in fields:
+                widget = entries[field]
+                value = widget.get()
+                # Basic validation (optional but recommended)
+                if field == "ID" and not value.isdigit():
+                     messagebox.showerror("Lỗi", "ID phải là số.")
+                     return
+                if not value and field not in ["Giới Tính","Ngày Sinh","Quốc Tịch","Quê Quán"]: # Example required fields
+                     messagebox.showerror("Lỗi", f"Trường '{field}' không được để trống.")
+                     return
+                new_customer_values.append(value)
 
-            # add new customer to customer_list
-            new_customer = tuple(entry.get() for entry in entries.values())
-            self.customer_list.append(new_customer)
-            
-            # move new customer to the top of table
-            last_insert_customer = self.tree.insert("", "end", values=new_customer)
+            try:
+                # convert birthday and check-in date to datetime objects
+                birthday_dt_fm = datetime.strptime(new_customer_values[3], "%Y-%m-%d")
+                checkin_dt_fm = datetime.strptime(new_customer_values[6], "%Y-%m-%d")
+            except ValueError as e:
+                messagebox.showerror("Lỗi định dạng ngày", f"Vui lòng nhập ngày theo định dạng yyyy-mm-dd.\nChi tiết: {e}")
+                return
+
+            new_customer_info = CustomerInfo(
+                id=new_customer_values[0],
+                name=new_customer_values[1],
+                sex=new_customer_values[2],
+                birthday=birthday_dt_fm,
+                national=new_customer_values[4],
+                country=new_customer_values[5],
+                checkin_date=checkin_dt_fm,
+                room_type=new_customer_values[7],
+                room_number=new_customer_values[8]
+            )
+
+            # Add the CustomerInfo object to customer_list
+            self.customer_list.append(new_customer_info)
+
+            # Add to Treeview (using attributes of the object)
+            last_insert_customer = self.tree.insert("", "end", iid=new_customer_info.id, values=(
+                new_customer_info.id,
+                new_customer_info.name,
+                new_customer_info.sex,
+                new_customer_info.birthday.strftime("%Y-%m-%d"),
+                new_customer_info.national,
+                new_customer_info.country,
+                new_customer_info.checkin_date.strftime("%Y-%m-%d"),
+                new_customer_info.room_type,
+                new_customer_info.room_number,
+            ))
             self.tree.move(last_insert_customer, "", 0)
-            
+
             add_window.destroy()
 
-        submit_btn = tk.Button(add_window, text="Lưu", command=submit)
-        submit_btn.grid(row=len(fields), columnspan=2, pady=10)
+            # add new customer to database 
+            self.db_conn.setCustomerToDatabase(new_customer_info)
+
+        submit_btn = tk.Button(add_window, text="Lưu", command=submit, bg=color1, fg="white")
+        submit_btn.grid(row=len(fields), column=0, columnspan=3, pady=10)
 
     def change_customer_information(self):
         selected_item = self.tree.selection()
@@ -250,7 +275,15 @@ class Customer(tk.Frame):
         edit_window.geometry("350x400")
 
         fields = [
-            "ID", "Họ Tên", "Giới Tính", "Ngày Sinh", "Quốc Tịch", "Quê Quán", "Ngày Thuê Phòng", "Loại Phòng",
+            "ID",
+            "Họ Tên",
+            "Giới Tính",
+            "Ngày Sinh",
+            "Quốc Tịch",
+            "Quê Quán",
+            "Ngày Thuê Phòng",
+            "Loại Phòng",
+            "Số Phòng"
         ]
         entries = {}
 
@@ -265,51 +298,138 @@ class Customer(tk.Frame):
             return "break"  # Prevents the default key press action
 
         # bind readonly event Entry
+        entries["ID"].bind("<Key>", prevent_keyboard_input) # bind event
+        entries["ID"].config(state="readonly")
+        entries["Ngày Sinh"].bind("<Key>", prevent_keyboard_input) # bind event
+        entries["Ngày Sinh"].config(state="readonly")
         entries["Ngày Thuê Phòng"].bind("<Key>", prevent_keyboard_input) # bind event
+        entries["Ngày Thuê Phòng"].config(state="readonly")
 
-        def open_calendar():
+        def open_rent_date_calendar():
             def select_date():
-                selected_date = cal.get_date()  # Get selected date
-                entries["Ngày Thuê Phòng"].delete(0, tk.END)  # Clear previous value
-                entries["Ngày Thuê Phòng"].insert(0, datetime.strptime(selected_date, "%d/%m/%Y").strftime("%d/%m/%Y"))
-                top.destroy()  # Close the calendar window
+                selected_date_str = cal.get_date()
 
-            # Create a new top-level window for the calendar
-            top = tk.Toplevel(self)
-            top.title("Choose a Date")
+                # No need to parse and reformat if get_date() returns the correct string format
+                entries["Ngày Thuê Phòng"].config(state="normal") # Allow insertion
+                entries["Ngày Thuê Phòng"].delete(0, tk.END)
+                entries["Ngày Thuê Phòng"].insert(0, selected_date_str) # Insert the YYYY-MM-DD string
+                entries["Ngày Thuê Phòng"].config(state="readonly") # Set back to readonly
+                top.destroy()
 
-            # Calendar widget
-            cal = Calendar(top, date_pattern="dd/MM/yyyy")
+            top = tk.Toplevel(edit_window) # Make it child of add_window
+            top.title("Chọn Ngày")
+
+            # Calendar widget - CHANGED date_pattern
+            cal = Calendar(top, date_pattern="yyyy-mm-dd", selectmode='day')
             cal.pack(pady=10)
 
             # Confirm button
             btn_select = tk.Button(top, text="Confirm", command=select_date)
             btn_select.pack(pady=5)
 
-        def get_current_combobox(room_type):
-            return 0 if room_type == "Thường" else 1
+        def open_birthday_calendar():
+            def select_date():
+                selected_date_str = cal.get_date()
+                entries["Ngày Sinh"].config(state="normal") # Allow insertion
+                entries["Ngày Sinh"].delete(0, tk.END)
+                entries["Ngày Sinh"].insert(0, selected_date_str) # Insert the YYYY-MM-DD string
+                entries["Ngày Sinh"].config(state="readonly") # Set back to readonly
+                top.destroy()
 
-        # choose date button
-        choose_date = tk.Button(edit_window,text="Checkin Date",command=open_calendar)
-        choose_date.grid(row=6,column=2)
+            top = tk.Toplevel(edit_window) # Make it child of add_window
+            top.title("Chọn Ngày")
 
-        # room type combobox
+            # Calendar widget - CHANGED date_pattern
+            cal = Calendar(top, date_pattern="yyyy-mm-dd", selectmode='day')
+            cal.pack(pady=10)
+
+            # Confirm button
+            btn_select = tk.Button(top, text="Xác Nhận", command=select_date)
+            btn_select.pack(pady=5)
+
+        def get_current_combobox(room_type_str):
+            return 0 if room_type_str == "Thường" else 1
+
+        # Choose date button - positioned next to the entry
+        choose_birthday = tk.Button(edit_window, text="...", command=open_birthday_calendar)
+        choose_birthday.grid(row=3 ,column=2, padx=(0, 5), pady=5, sticky="w")
+
+        # Choose date button for "Ngày Thuê Phòng"
+        choose_rent_date = tk.Button(edit_window, text="...", command=open_rent_date_calendar) 
+        choose_rent_date.grid(row=6, column=2, padx=(0, 5), pady=5, sticky="w") 
+
+        # Room type combobox
         combobox_items = ["Thường", "VIP"]
-        combobox = ttk.Combobox(edit_window, values=combobox_items)
-        combobox.current(get_current_combobox(entries["Loại Phòng"].get())) # current data
-        combobox.grid(row=7,column=1) # replace normal Entry text
+        combobox = ttk.Combobox(edit_window, values=combobox_items, state="readonly")
+        # Get current value *before* replacing the widget
+        current_room_type = entries["Loại Phòng"].get()
+        # Replace placeholder Entry
+        entries["Loại Phòng"].grid_forget()
+        combobox.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
+        combobox.current(get_current_combobox(current_room_type)) # Set current data
+        entries["Loại Phòng"] = combobox # Update entries dict
 
         def save_changes():
-            new_values = tuple(entry.get() for entry in entries.values())
-            self.tree.item(selected_item[0], values=new_values)
-            for index, customer in enumerate(self.customer_list):
-                if customer[0] == item_values[0]:  # Update correct customer by ID
-                    self.customer_list[index] = new_values
-                    break
+            new_customer_values = []
+            for field in fields:
+                widget = entries[field]
+                value = widget.get()
+                # Basic validation (optional but recommended)
+                if field == "ID" and not value.isdigit():
+                     messagebox.showerror("Lỗi", "ID phải là số.")
+                     return
+                if not value and field not in ["Giới Tính","Ngày Sinh","Quốc Tịch","Quê Quán"]: # Example required fields
+                     messagebox.showerror("Lỗi", f"Trường '{field}' không được để trống.")
+                     return
+                new_customer_values.append(value)
+
+            try:
+                # convert birthday and check-in date to datetime objects
+                birthday_dt_fm = datetime.strptime(new_customer_values[3], "%Y-%m-%d")
+                checkin_dt_fm = datetime.strptime(new_customer_values[6], "%Y-%m-%d")
+            except ValueError as e:
+                messagebox.showerror("Lỗi định dạng ngày", f"Vui lòng nhập ngày theo định dạng yyyy-mm-dd.\nChi tiết: {e}")
+                return
+
+            new_customer_info = CustomerInfo(
+                id=new_customer_values[0],
+                name=new_customer_values[1],
+                sex=new_customer_values[2],
+                birthday=birthday_dt_fm,
+                national=new_customer_values[4],
+                country=new_customer_values[5],
+                checkin_date=checkin_dt_fm,
+                room_type=new_customer_values[7],
+                room_number=new_customer_values[8]
+            )
+
+            # remove old customer data in local list(Treeview)
+            self.tree.delete(new_customer_values[0])
+
+            # Add the CustomerInfo object to customer_list
+            self.customer_list.append(new_customer_info)
+
+            # Add to Treeview (using attributes of the object)
+            last_insert_customer = self.tree.insert("", "end", iid=new_customer_info.id,values=(
+                new_customer_info.id,
+                new_customer_info.name,
+                new_customer_info.sex,
+                new_customer_info.birthday.strftime("%Y-%m-%d"),
+                new_customer_info.national,
+                new_customer_info.country,
+                new_customer_info.checkin_date.strftime("%Y-%m-%d"),
+                new_customer_info.room_type,
+                new_customer_info.room_number,
+            ))
+            self.tree.move(last_insert_customer, "", 0)
+
             edit_window.destroy()
 
-        save_btn = tk.Button(edit_window, text="Lưu", command=save_changes)
-        save_btn.grid(row=len(fields), columnspan=2, pady=10)
+            # change customer information in database 
+            self.db_conn.updateCustomerInDatabase(new_customer_info)
+
+        save_btn = tk.Button(edit_window, text="Lưu", command=save_changes, bg=color1, fg="white")
+        save_btn.grid(row=len(fields), column=0, columnspan=3, pady=10)
 
     def remove_customer(self):
         selected_item = self.tree.selection()
@@ -323,9 +443,12 @@ class Customer(tk.Frame):
         customer_id = item_values[0]
 
         self.customer_list = [
-            c for c in self.customer_list if c[0] != customer_id
+            c for c in self.customer_list if c.id != customer_id
         ]
         self.tree.delete(selected_item)
+
+        # remove customer from database
+        self.db_conn.removeCustomerFromDatabase(customer_id)
         
     def sent_data_to_checkout(self):
         selected_item = self.tree.selection()

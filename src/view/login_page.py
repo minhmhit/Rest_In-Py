@@ -9,7 +9,7 @@ class LoginPage(tk.Frame):
         self.show_main = show_main  # Function to show main UI
 
         # Centering login screen
-        self.login_screen = LabelFrame(self, bg="#deffff", padx=200, pady=200)
+        self.login_screen = LabelFrame(self, bg="#e3e3e3", padx=200, pady=200)
         self.login_screen.pack(expand=True,fill="both", anchor="center")
         
         self.label = tk.Label(self.login_screen, text="ĐĂNG NHẬP TÀI KHOẢN", 

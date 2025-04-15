@@ -9,7 +9,7 @@ from numpy.__config__ import show
 from PIL import Image, ImageTk
 from video_stream import VideoStream
 
-color1 = "#deffff"
+color1 = "#e3e3e3"
 video_path1 = "color.mp4"
 video_path2 = "720p.mp4"
 video_path3 = "1080p.mp4"
@@ -44,8 +44,8 @@ class Camera(tk.Frame):
         # ========================================================
         self.title_video = tk.Label(
             self.mainPanel,
-            bg="#d4ffff",
-            fg="#6f74ff",
+            bg=color1,
+            fg="black",
             text="Motel Main Camera View",
             font=("Arial", 20, "bold"),
             anchor="center",
