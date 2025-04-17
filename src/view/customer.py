@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
 from customer_information import CustomerInfo
-
 from tkcalendar import Calendar
 
 color1 = "#3B82F6"
