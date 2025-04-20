@@ -89,7 +89,7 @@ try:
 
 
     # create the login page (only this is visible at start)
-    login_frame = LoginPage(root, show_main)
+    login_frame = LoginPage(root, show_main, staff_list)
     login_frame.pack(expand=True, fill="both")
 
     # start the app

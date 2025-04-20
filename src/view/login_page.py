@@ -3,10 +3,11 @@ from tkinter import LabelFrame, messagebox
 from tkinter import font
 
 class LoginPage(tk.Frame):
-    def __init__(self, parent, show_main):
+    def __init__(self, parent, show_main, staff_list):
         super().__init__(parent)
         self.parent = parent
         self.show_main = show_main  # Function to show main UI
+        self.staff_list = staff_list
 
         # Centering login screen
         self.login_screen = LabelFrame(self, bg="#e3e3e3", padx=200, pady=200)
@@ -55,13 +56,28 @@ class LoginPage(tk.Frame):
             if hide:
                 entry.config(show="")
 
+    def isUsernameExist(self,account_username) -> bool:
+        for staff_member in self.staff_list:
+            if staff_member.username == account_username:
+                return True
+        return False
+
+    def isPasswordCorrect(self,account_password) -> bool:
+        for staff_member in self.staff_list:
+            if staff_member.password == account_password:
+                return True
+        return False
+
     def login(self):
         username = self.entry_username.get()
         password = self.entry_password.get()
         
-        if username == "1" and password == "1":
-            messagebox.showinfo("Dang Nhap Thanh Cong", f"Xin Chao {username}!")
-            self.show_main()  # Switch to the main application
+        if self.isUsernameExist(username):
+            if self.isPasswordCorrect(password):
+                messagebox.showinfo("Dang Nhap Thanh Cong", f"Xin Chao {username}!")
+                self.show_main()  # Switch to the main application
+            else: 
+                messagebox.showwarning("Dang Nhap That Bai", f"Sai Mat Khau: {username}!")
         else:
             messagebox.showerror("Dang Nhap That Bai", "Tai Khoan Hay Mat Khau Khong Hop Le")
             self.entry_username.delete(0, tk.END)
