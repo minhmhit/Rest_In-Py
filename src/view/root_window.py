@@ -10,13 +10,10 @@ from revenue import Revenue
 from customer_information import CustomerInfo
 from room_management import RoomManagement
 from staff_management import StaffManagement
+from revenue_chart import RevenueChart
 from database import DB_Connector
 
-# customer/staff list
-# customer_list = []
-# staff_list = []
-
-# get data from database - XAMPP
+# get data from database - using XAMPP to connect
 try:
     db_conn = DB_Connector()
     customer_list = db_conn.getCustomersFromDatabase()
@@ -24,6 +21,8 @@ try:
 
     # main window
     root = tk.Tk()
+    root.title("Quản Lí Nhà Trọ")
+    root.iconbitmap("icon/hotel.ico")
     root.geometry("1280x720")
     root.configure(bg="#3B82F6")
 
@@ -61,8 +60,9 @@ try:
             "Thanh Toán": Checkout(root,customer_information),
             "Danh Sách Thuê": Customer(root,show_tab,customer_information,customer_list,db_conn),
             "Doanh thu": Revenue(root),
-            "Quản Lý Phòng": RoomManagement(root),
-            "Quản Lý Nhân Viên": StaffManagement(root,staff_list,db_conn),
+            "Quản Lý Phòng": RoomManagement(root),
+            "Quản Lý Nhân  Viên": StaffManagement(root,staff_list,db_conn),
+            "Biểu Đồ Doanh Thu": RevenueChart(root)
         }
 
         # create buttons to switch tabs
