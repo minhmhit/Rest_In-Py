@@ -12,9 +12,6 @@ from datetime import datetime
 import time
 
 color1 = "#e3e3e3"
-video_path1 = "color.mp4"
-video_path2 = "720p.mp4"
-video_path3 = "1080p.mp4"
 
 alert_notifications = [
     "🔔 Motion detected!",
@@ -23,7 +20,6 @@ alert_notifications = [
     "🆕 New face detected",
     "🔄 Video feed refreshed",
 ]
-
 
 class Camera(tk.Frame):
 
@@ -89,7 +85,8 @@ class Camera(tk.Frame):
         self.show_camera.grid(row=1, column=0, sticky="nsew")
         # mở cam và thêm phần nhận diện khuôn mặt + ghi time
         self.cap = cv2.VideoCapture(0)
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        # self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        self.face_cascade = cv2.CascadeClassifier("/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml")
         self.mean_face, self.eigvecs, self.X_projected, self.labels = load_model(num_components=10)
         self.label_map = build_label_map("dataset")
         self.last_logged_times = {}
@@ -129,7 +126,7 @@ class Camera(tk.Frame):
         self.notification_box.insert("1.0", new_text)  # Insert all at the top
         self.notification_box.config(state="disabled")
 
-    # temp funtion show video/camera ==================================================
+    # funtion show video/camera ==================================================
     def update_frame(self):
         """Fetch frame from VideoStream and update Label"""
         ret, frame = self.cap.read()
@@ -156,6 +153,7 @@ class Camera(tk.Frame):
         self.show_camera.imgtk = imgtk
         self.show_camera.config(image=imgtk)
         self.show_camera.after(10, self.update_frame)
+
     def log_recognition(self, name):
         now = time.time()
         last_time = self.last_logged_times.get(name, 0)
@@ -170,6 +168,7 @@ class Camera(tk.Frame):
             self.update_notifications()
 
             self.last_logged_times[name] = now
+
     def __del__(self):
         if hasattr(self, 'cap') and self.cap.isOpened():
             self.cap.release()

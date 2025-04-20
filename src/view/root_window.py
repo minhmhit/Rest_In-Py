@@ -22,7 +22,7 @@ try:
     # main window
     root = tk.Tk()
     root.title("Quản Lí Nhà Trọ")
-    root.iconbitmap("icon/hotel.ico")
+    # root.iconbitmap("/icon/hotel.ico")
     root.geometry("1280x720")
     root.configure(bg="#3B82F6")
 
