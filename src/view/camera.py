@@ -13,18 +13,14 @@ import time
 
 color1 = "#e3e3e3"
 
-alert_notifications = [
-    "🔔 Motion detected!",
-    "✅ Camera is online",
-    "⚠️  Low light warning",
-    "🆕 New face detected",
-    "🔄 Video feed refreshed",
-]
-
 class Camera(tk.Frame):
 
     def __init__(self, parent):
         super().__init__(parent, bg="#F5F5F5")
+        # run flag
+        self.running = True
+        self.after_id = None
+
         # panel
         self.mainPanel = tk.LabelFrame(self, bg="white")
         self.leftPanel = tk.LabelFrame(self, bg=color1)
@@ -72,7 +68,6 @@ class Camera(tk.Frame):
 
         # left panel
         self.notification_box.pack(expand=True, fill="both")
-        self.auto_generate_notifications()
 
         # label
         self.title_video.grid(row=0, column=0, sticky="nsew")
@@ -83,8 +78,10 @@ class Camera(tk.Frame):
             self.mainPanel, bg=color1, height=1280, width=720
         )
         self.show_camera.grid(row=1, column=0, sticky="nsew")
+
         # mở cam và thêm phần nhận diện khuôn mặt + ghi time
         self.cap = cv2.VideoCapture(0)
+
         # self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
         self.face_cascade = cv2.CascadeClassifier("/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml")
         self.mean_face, self.eigvecs, self.X_projected, self.labels = load_model(num_components=10)
@@ -95,22 +92,6 @@ class Camera(tk.Frame):
     def get_notification(self, strings):
         noti = random.choice(strings)
         return tk.Label(self, text=noti)
-
-    def get_random_string(self):
-        return random.choice(alert_notifications)
-
-    def auto_generate_notifications(self):
-        new_notification = self.get_random_string()
-
-        # add to notification list
-        self.notifications.append(new_notification)
-
-        # refresh displayed notifications
-        self.update_notifications()
-
-        # show notifications
-        self.after(12000, self.remove_oldest_notifications)
-        self.after(2500, self.auto_generate_notifications)
 
     def remove_oldest_notifications(self):
         if self.notifications:
@@ -128,9 +109,14 @@ class Camera(tk.Frame):
 
     # funtion show video/camera ==================================================
     def update_frame(self):
-        """Fetch frame from VideoStream and update Label"""
+        if not self.running:
+            return
+
         ret, frame = self.cap.read()
         if not ret:
+            self.running = False  # Stop if no frame
+            if hasattr(self, 'cap') and self.cap.isOpened():
+                self.cap.release()
             return
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -152,7 +138,9 @@ class Camera(tk.Frame):
 
         self.show_camera.imgtk = imgtk
         self.show_camera.config(image=imgtk)
-        self.show_camera.after(10, self.update_frame)
+        # self.show_camera.after(10, self.update_frame)
+
+        self.after_id = self.show_camera.after(10, self.update_frame)
 
     def log_recognition(self, name):
         now = time.time()
@@ -170,6 +158,10 @@ class Camera(tk.Frame):
             self.last_logged_times[name] = now
 
     def __del__(self):
+        self.running = False
+        if self.after_id is not None:
+            self.show_camera.after_cancel(self.after_id) # Cancel any pending calls
+            self.after_id = None
         if hasattr(self, 'cap') and self.cap.isOpened():
             self.cap.release()
         cv2.destroyAllWindows()

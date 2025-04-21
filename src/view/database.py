@@ -181,5 +181,7 @@ class DB_Connector:
         pass
 
     # ------ close sql connector buffer ------
-    def closeBuffer(self) -> None:
-        self.conn.close()
+    def closeBuffer(self):
+        if self.conn and self.conn.is_connected():
+            self.conn.close()
+            print("Database connection closed.") # For debugging
