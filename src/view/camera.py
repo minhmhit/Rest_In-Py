@@ -82,8 +82,8 @@ class Camera(tk.Frame):
         # mở cam và thêm phần nhận diện khuôn mặt + ghi time
         self.cap = cv2.VideoCapture(0)
 
-        # self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-        self.face_cascade = cv2.CascadeClassifier("/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml")
+        self.face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+        # self.face_cascade = cv2.CascadeClassifier("/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml")
         self.mean_face, self.eigvecs, self.X_projected, self.labels = load_model(num_components=10)
         self.label_map = build_label_map("dataset")
         self.last_logged_times = {}
