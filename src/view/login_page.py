@@ -1,58 +1,86 @@
-import customtkinter as ctk
-from tkinter import font, messagebox
+import tkinter as tk
+from tkinter import LabelFrame, messagebox
+from tkinter import font
 
-class LoginPage(ctk.CTkFrame):
+class LoginPage(tk.Frame):
     def __init__(self, parent, show_main, staff_list):
         super().__init__(parent)
         self.parent = parent
         self.show_main = show_main  # Function to show main UI
         self.staff_list = staff_list
 
-        # Configure grid layout for centering
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        # Centering login screen
+        self.login_screen = LabelFrame(self, bg="#e3e3e3", padx=200, pady=200)
+        self.login_screen.pack(expand=True,fill="both", anchor="center")
+        
+        self.label = tk.Label(self.login_screen, text="ĐĂNG NHẬP TÀI KHOẢN", 
+                               font=font.Font(family="Arial", size=20, weight="bold"),
+                               anchor='center', justify='center')
+        self.label.pack()
+        
+        self.label_username = tk.Label(self.login_screen, text="Username:")
+        self.label_username.pack(pady=5)
+        
+        self.entry_username = tk.Entry(self.login_screen, fg='gray')
+        self.entry_username.insert(0, "Enter your username...")
+        self.entry_username.pack(pady=5)
+        
+        self.label_password = tk.Label(self.login_screen, text="Password:")
+        self.label_password.pack(pady=5)
+        
+        self.entry_password = tk.Entry(self.login_screen, show="*", fg='gray')
+        self.entry_password.insert(0, "Enter your password...")
+        self.entry_password.pack(pady=5)
+        
+        self.button_login = tk.Button(self.login_screen, text="Login", command=self.login)
+        self.button_login.pack(pady=10)
 
-        self.login_frame = ctk.CTkFrame(self)
-        self.login_frame.grid(row=0, column=0, padx=40, pady=40, sticky="nsew")
-        self.login_frame.grid_columnconfigure(0, weight=1)
+        # Bind event for placeholders
+        self.entry_username.bind("<FocusIn>", lambda event: self.clear_placeholder(self.entry_username, "Enter your username..."))
+        self.entry_username.bind("<FocusOut>", lambda event: self.restore_placeholder(self.entry_username, "Enter your username..."))
 
-        self.title_font = ctk.CTkFont(family="Arial", size=24, weight="bold")
-        self.label = ctk.CTkLabel(self.login_frame, text="ĐĂNG NHẬP TÀI KHOẢN", font=self.title_font)
-        self.label.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
+        self.entry_password.bind("<FocusIn>", lambda event: self.clear_placeholder(self.entry_password, "Enter your password...", hide=True))
+        self.entry_password.bind("<FocusOut>", lambda event: self.restore_placeholder(self.entry_password, "Enter your password...", hide=True))
+    
+    def clear_placeholder(self, entry, placeholder, hide=False):
+        if entry.get() == placeholder:
+            entry.delete(0, tk.END)
+            entry.config(fg="black")
+            if hide:
+                entry.config(show="*")
+    
+    def restore_placeholder(self, entry, placeholder, hide=False):
+        if entry.get() == "":
+            entry.insert(0, placeholder)
+            entry.config(fg="gray")
+            if hide:
+                entry.config(show="")
 
-        self.username_entry = ctk.CTkEntry(self.login_frame, placeholder_text="Tên đăng nhập")
-        self.username_entry.grid(row=1, column=0, padx=20, pady=(10, 10), sticky="ew")
-
-        self.password_entry = ctk.CTkEntry(self.login_frame, placeholder_text="Mật khẩu", show="*")
-        self.password_entry.grid(row=2, column=0, padx=20, pady=(10, 20), sticky="ew")
-
-        self.login_button = ctk.CTkButton(self.login_frame, text="Đăng nhập", command=self.login)
-        self.login_button.grid(row=3, column=0, padx=20, pady=(20, 20), sticky="ew")
-
-    def isUsernameExist(self, account_username) -> bool:
+    def isUsernameExist(self,account_username) -> bool:
         for staff_member in self.staff_list:
             if staff_member.username == account_username:
                 return True
         return False
 
-    def isPasswordCorrect(self, account_password) -> bool:
+    def isPasswordCorrect(self,account_password) -> bool:
         for staff_member in self.staff_list:
             if staff_member.password == account_password:
                 return True
         return False
 
     def login(self):
-        username = self.username_entry.get()
-        password = self.password_entry.get()
-
+        username = self.entry_username.get()
+        password = self.entry_password.get()
+        
         if self.isUsernameExist(username):
             if self.isPasswordCorrect(password):
-                messagebox.showinfo("Đăng nhập thành công", f"Xin chào {username}!")
+                messagebox.showinfo("Dang Nhap Thanh Cong", f"Xin Chao {username}!")
                 self.show_main()  # Switch to the main application
-            else:
-                messagebox.showwarning("Đăng nhập thất bại", f"Sai mật khẩu cho tài khoản: {username}!")
+            else: 
+                messagebox.showwarning("Dang Nhap That Bai", f"Sai Mat Khau: {username}!")
         else:
-            messagebox.showerror("Đăng nhập thất bại", "Tài khoản hoặc mật khẩu không hợp lệ")
-            self.username_entry.delete(0, ctk.END)
-            self.password_entry.delete(0, ctk.END)
-            self.username_entry.focus()
+            messagebox.showerror("Dang Nhap That Bai", "Tai Khoan Hay Mat Khau Khong Hop Le")
+            self.entry_username.delete(0, tk.END)
+            self.entry_password.delete(0, tk.END)
+            self.restore_placeholder(self.entry_username, "Enter your username...")
+            self.restore_placeholder(self.entry_password, "Enter your password...", hide=True)
