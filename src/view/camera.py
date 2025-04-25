@@ -40,7 +40,7 @@ class Camera(tk.Frame):
             self.mainPanel,
             bg=color1,
             fg="black",
-            text="Motel Main Camera View",
+            text="Camera Sảnh Chính",
             font=("Arial", 20, "bold"),
             anchor="center",
             justify="center",
