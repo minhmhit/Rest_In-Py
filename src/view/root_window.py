@@ -61,7 +61,7 @@ class App(tk.Tk):
             "Thanh Toán": Checkout(self, self.customer_information),
             "Danh Sách Thuê": Customer(self, self.show_tab, self.customer_information, self.customer_list, self.db_conn),
             "Doanh thu": Revenue(self),
-            "Quản Lý Phòng": RoomManagement(self),
+            "Quản Lý Phòng": RoomManagement(self,self.customer_list),
             "Quản Lý Nhân  Viên": StaffManagement(self, self.staff_list, self.db_conn),
             "Biểu Đồ Doanh Thu": RevenueChart(self)
         }

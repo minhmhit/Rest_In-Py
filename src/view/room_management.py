@@ -3,7 +3,7 @@ from tkinter import messagebox
 import platform
 
 class RoomManagement(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, customer_list):
         super().__init__(parent, bg="#F5F5F5")
 
         # --- Data with Integer Room Numbers ---
@@ -27,16 +27,17 @@ class RoomManagement(tk.Frame):
             (909, 'Normal'),
         ]
 
-        self.customer_list = [
-            # Note the last element is now an integer
-            (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2005-08-16", "Thường", 301),
-            (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh", "2015-02-20", "VIP", 102),
-            (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh", "2010-02-10", "VIP", 103),
-            (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi", "2018-11-15", "Thường", 104),
-            (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu", "2020-01-01", "Thường", 105),
-            (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong", "2015-02-20", "VIP", 205),
-            (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Vĩnh Long", "2015-02-23", "Thường", 201) # Corrected address typo
-        ]
+        self.customer_list = customer_list
+        # self.customer_list = [
+        #     # Note the last element is now an integer
+        #     (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2005-08-16", "Thường", 301),
+        #     (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh", "2015-02-20", "VIP", 102),
+        #     (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh", "2010-02-10", "VIP", 103),
+        #     (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi", "2018-11-15", "Thường", 104),
+        #     (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu", "2020-01-01", "Thường", 105),
+        #     (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong", "2015-02-20", "VIP", 205),
+        #     (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Vĩnh Long", "2015-02-23", "Thường", 201) # Corrected address typo
+        # ]
         # --- End Data ---
 
         self.title_label = tk.Label(self, text="Danh Sách Phòng Hiện Có", font=("Arial", 16, "bold"), bg="#F5F5F5", pady=10)
@@ -120,7 +121,7 @@ class RoomManagement(tk.Frame):
 
         for customer in self.customer_list:
             # *** CORRECTED: Direct integer comparison ***
-            if customer[8] == target_room_id:
+            if customer.room_number == target_room_id:
                 return customer
         return None
 
@@ -130,13 +131,13 @@ class RoomManagement(tk.Frame):
         customer = self._get_customer_by_room(room_id)
         if customer:
             # Format customer info for display
-            customer_info = (f"ID: {customer[0]}\nTên: {customer[1]}\nGiới Tính: {customer[2]}\n"
-                             f"Ngày Sinh: {customer[3]}\nQuốc Tịch: {customer[4]}\nĐịa Chỉ: {customer[5]}\n"
-                             f"Ngày Nhận Phòng: {customer[6]}\nLoại Khách: {customer[7]}")
+            customer_info = (f"ID: {customer.id}\nTên: {customer.name}\nGiới Tính: {customer.sex}\n"
+                             f"Ngày Sinh: {customer.birthday}\nQuốc Tịch: {customer.national}\nQuê Quán: {customer.country}\n"
+                             f"Ngày Nhận Phòng: {customer.checkin_date}\nLoại Khách: {customer.room_type}")
             messagebox.showinfo(f"Thông Tin Khách Hàng - Phòng {room_id}", customer_info)
         else:
             # Optionally show a message if the room is clicked but no customer is assigned
-             messagebox.showinfo(f"Thông Tin Phòng {room_id}", "Phòng này hiện đang trống.")
+            messagebox.showinfo(f"Thông Tin Phòng {room_id}", "Phòng này hiện đang trống.")
 
 
     def _create_room_tiles(self):
@@ -146,7 +147,7 @@ class RoomManagement(tk.Frame):
         self.room_tiles.clear()
 
         # *** CORRECTED: Use integers directly for occupied rooms ***
-        occupied_rooms = {customer[8] for customer in self.customer_list} # Get occupied room numbers (integers)
+        occupied_rooms = {customer.room_number for customer in self.customer_list} # Get occupied room numbers (integers)
 
         for room_id, room_type in self.rooms: # room_id is now an integer
             is_occupied = room_id in occupied_rooms # Direct integer check
