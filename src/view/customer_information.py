@@ -10,15 +10,6 @@ class CustomerInfo:
         self.room_type = room_type
         self.room_number = room_number
 
-    # def getID(self): return self.id
-    # def getName(self): return self.name
-    # def getSex(self): return self.sex
-    # def getBirthDay(self): return self.birthday
-    # def getNational(self): return self.national
-    # def getCountry(self): return self.country
-    # def getCheckinDate(self): return self.checkin_date
-    # def getRoomType(self): return self.room_type
-
     def haveNone(self): 
         if self.id is None: return True
         if self.name is None: return True
