@@ -1,15 +1,30 @@
 import tkinter as tk
-from datetime import datetime
-from tkinter import messagebox
+from datetime import datetime, date
+from tkinter import messagebox, ttk
 from tkinter import filedialog
 import locale
+
+# Assume CustomerInfo is imported
+from customer_information import CustomerInfo
 
 # Import python-docx
 from docx import Document
 from docx.shared import Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-# Try to set locale for currency formatting
+# --- Define colors --- (Keep consistent)
+COLOR_PRIMARY_BLUE = "#3B82F6"
+COLOR_ACCENT_GREEN = "#28a745"
+COLOR_ACCENT_RED = "#dc3545"
+COLOR_ACCENT_TEAL = "#17a2b8"
+COLOR_BACKGROUND_LIGHT = "#eef2f7"
+COLOR_FRAME_BACKGROUND = "#f8f9fa"
+COLOR_MAIN_PANEL_BG = "#ffffff"
+COLOR_TEXT_DARK = "#333333"
+COLOR_TEXT_MEDIUM = "#555555"
+COLOR_BORDER_GRAY = "#cccccc"
+
+# --- Currency Formatting (Keep as is) ---
 try:
     locale.setlocale(locale.LC_ALL, 'vi_VN.UTF-8')
 except locale.Error:
@@ -29,32 +44,28 @@ else:
 if 'format_currency' not in locals():
      def format_currency(amount):
             return f"{amount:,.0f}".replace(",", ".") + " VND"
-
-# (Your CustomerInfo class here - commented out)
-# class CustomerInfo: ...
+# --- End Currency Formatting ---
 
 
 class Checkout(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, bg="#eef2f7")
+        super().__init__(parent, bg=COLOR_BACKGROUND_LIGHT)
         self.price_per_day = {"VIP": 400000, "Normal": 250000}
 
-        # --- NEW: Fixed daily rates for additional costs ---
         self.additional_price_per_day = {
-            "Tiền điện": 5000,  # Example: 5000 VND per day
-            "Tiền nước": 3000,  # Example: 3000 VND per day
-            "Internet": 10000, # Example: 10000 VND per day
-            "Tiền rác": 1000,   # Example: 1000 VND per day
-            "Vệ sinh": 2000,    # Example: 2000 VND per day
+            "Tiền điện": 5000,
+            "Tiền nước": 3000,
+            "Internet": 10000,
+            "Tiền rác": 1000,
+            "Vệ sinh": 2000,
         }
-        # --- End NEW ---
 
-        self.controller = controller # Customer data object
+        self.controller = controller # Assumed to hold customer data (CustomerInfo object or similar)
 
         # Panels
-        self.leftPanel = tk.Frame(self, bg="#eef2f7")
-        self.rightPanel = tk.Frame(self, bg="#eef2f7")
-        self.mainPanel = tk.Frame(self, bg="#ffffff", padx=30, pady=30, relief=tk.RAISED, borderwidth=1, highlightbackground="#cccccc", highlightthickness=1)
+        self.leftPanel = tk.Frame(self, bg=COLOR_BACKGROUND_LIGHT)
+        self.rightPanel = tk.Frame(self, bg=COLOR_BACKGROUND_LIGHT)
+        self.mainPanel = tk.Frame(self, bg=COLOR_MAIN_PANEL_BG, padx=30, pady=30, relief=tk.RAISED, borderwidth=1, highlightbackground=COLOR_BORDER_GRAY, highlightthickness=1)
 
         # Configure grid weights
         self.columnconfigure(0, weight=1)
@@ -71,181 +82,222 @@ class Checkout(tk.Frame):
 
         # Title
         self.invoice_label = tk.Label(
-            self.mainPanel, text="HÓA ĐƠN THANH TOÁN", font=("Arial", 30, "bold"), bg="#ffffff", fg="#333333"
+            self.mainPanel, text="HÓA ĐƠN THANH TOÁN", font=("Arial", 30, "bold"), bg=COLOR_MAIN_PANEL_BG, fg=COLOR_TEXT_DARK
         )
         self.invoice_label.pack(pady=(0, 20))
 
         # Customer Info Frame
-        self.info_frame = tk.LabelFrame(self.mainPanel, text="THÔNG TIN KHÁCH HÀNG", font=("Arial", 14, "bold"), bg="#f8f9fa", padx=20, pady=15, bd=1, relief=tk.GROOVE, fg="#555555")
+        self.info_frame = tk.LabelFrame(self.mainPanel, text="THÔNG TIN KHÁCH HÀNG", font=("Arial", 14, "bold"), bg=COLOR_FRAME_BACKGROUND, padx=20, pady=15, bd=1, relief=tk.GROOVE, fg=COLOR_TEXT_MEDIUM)
         self.info_frame.pack(fill="x", padx=10, pady=10)
 
-        info_grid_frame = tk.Frame(self.info_frame, bg="#f8f9fa")
+        info_grid_frame = tk.Frame(self.info_frame, bg=COLOR_FRAME_BACKGROUND)
         info_grid_frame.pack(fill="both", expand=True)
 
         self.labels = {} # Labels for customer info and room type (read-only)
-        fields = [
-            ("Họ tên", "name"),
-            ("Giới tính", "sex"),
-            ("Ngày sinh", "birthday"),
-            ("Quốc tịch", "national"),
-            ("Quê quán", "country"),
-        ]
 
-        for i, (title, field) in enumerate(fields):
-            tk.Label(info_grid_frame, text=title + ":", font=("Arial", 12, "bold"), bg="#f8f9fa", fg="#333333").grid(row=i, column=0, sticky="w", padx=5, pady=3)
-            self.labels[field] = tk.Label(info_grid_frame, text="Đang tải...", font=("Arial", 12), bg="#f8f9fa", fg="#000000")
+        # --- NEW: Store info fields as a class attribute ---
+        self.info_fields = [
+            ("Họ tên", "name"), ("Giới tính", "sex"), ("Ngày Sinh", "birthday"),
+            ("Quốc tịch", "national"), ("Quê quán", "country"),
+        ]
+        # --- End NEW ---
+
+        # Use self.info_fields to create labels
+        for i, (title, field) in enumerate(self.info_fields):
+            tk.Label(info_grid_frame, text=title + ":", font=("Arial", 12, "bold"), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK).grid(row=i, column=0, sticky="w", padx=5, pady=3)
+            self.labels[field] = tk.Label(info_grid_frame, text="Đang tải...", font=("Arial", 12), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK)
             self.labels[field].grid(row=i, column=1, sticky="w", padx=5, pady=3)
 
         # Room Details Frame
-        self.room_frame = tk.LabelFrame(self.mainPanel, text="CHI TIẾT THUÊ PHÒNG", font=("Arial", 14, "bold"), bg="#f8f9fa", padx=20, pady=15, bd=1, relief=tk.GROOVE, fg="#555555")
+        self.room_frame = tk.LabelFrame(self.mainPanel, text="CHI TIẾT THUÊ PHÒNG", font=("Arial", 14, "bold"), bg=COLOR_FRAME_BACKGROUND, padx=20, pady=15, bd=1, relief=tk.GROOVE, fg=COLOR_TEXT_MEDIUM)
         self.room_frame.pack(fill="x", padx=10, pady=10)
 
-        room_grid_frame = tk.Frame(self.room_frame, bg="#f8f9fa")
+        room_grid_frame = tk.Frame(self.room_frame, bg=COLOR_FRAME_BACKGROUND)
         room_grid_frame.pack(fill="both", expand=True)
 
-        tk.Label(room_grid_frame, text="Loại phòng:", font=("Arial", 12, "bold"), bg="#f8f9fa", fg="#333333").grid(row=0, column=0, sticky="w", padx=5, pady=3)
-        self.labels["room_type"] = tk.Label(room_grid_frame, text="Đang tải...", font=("Arial", 12), bg="#f8f9fa", fg="#000000") # room_type label is also stored here
+        tk.Label(room_grid_frame, text="Loại phòng:", font=("Arial", 12, "bold"), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK).grid(row=0, column=0, sticky="w", padx=5, pady=3)
+        self.labels["room_type"] = tk.Label(room_grid_frame, text="Đang tải...", font=("Arial", 12), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK) # room_type label is also stored here
         self.labels["room_type"].grid(row=0, column=1, sticky="w", padx=5, pady=3)
 
-        tk.Label(room_grid_frame, text="Ngày nhận phòng:", font=("Arial", 12, "bold"), bg="#f8f9fa", fg="#333333").grid(row=1, column=0, sticky="w", padx=5, pady=3)
-        self.checkin_date_label = tk.Label(room_grid_frame, text="Đang tải...", bg="#f8f9fa", font=("Arial", 12), fg="#000000")
+        tk.Label(room_grid_frame, text="Ngày nhận phòng:", font=("Arial", 12, "bold"), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK).grid(row=1, column=0, sticky="w", padx=5, pady=3)
+        self.checkin_date_label = tk.Label(room_grid_frame, text="Đang tải...", bg=COLOR_FRAME_BACKGROUND, font=("Arial", 12), fg=COLOR_TEXT_DARK)
         self.checkin_date_label.grid(row=1, column=1, sticky="w", padx=5, pady=3)
 
-        tk.Label(room_grid_frame, text="Ngày trả phòng:", font=("Arial", 12, "bold"), bg="#f8f9fa", fg="#333333").grid(row=2, column=0, sticky="w", padx=5, pady=3)
-        self.checkout_date_label = tk.Label(room_grid_frame, text="Đang tải...", bg="#f8f9fa", font=("Arial", 12), fg="#000000")
+        tk.Label(room_grid_frame, text="Ngày trả phòng:", font=("Arial", 12, "bold"), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK).grid(row=2, column=0, sticky="w", padx=5, pady=3)
+        self.checkout_date_label = tk.Label(room_grid_frame, text="Đang tải...", bg=COLOR_FRAME_BACKGROUND, font=("Arial", 12), fg=COLOR_TEXT_DARK)
         self.checkout_date_label.grid(row=2, column=1, sticky="w", padx=5, pady=3)
 
+
         # Separator
-        separator_room_to_additional = tk.Frame(self.mainPanel, height=1, bg="#cccccc")
+        separator_room_to_additional = tk.Frame(self.mainPanel, height=1, bg=COLOR_BORDER_GRAY)
         separator_room_to_additional.pack(fill="x", padx=10, pady=15)
 
-        # Additional Costs Frame (Now displaying calculated values)
-        self.additional_frame = tk.LabelFrame(self.mainPanel, text="CHI PHÍ PHỤ (Tính theo ngày thuê)", font=("Arial", 14, "bold"), bg="#f8f9fa", padx=20, pady=15, bd=1, relief=tk.GROOVE, fg="#555555")
+        # Additional Costs Frame (Displaying calculated values)
+        self.additional_frame = tk.LabelFrame(self.mainPanel, text="CHI PHÍ PHỤ (Tính theo ngày thuê)", font=("Arial", 14, "bold"), bg=COLOR_FRAME_BACKGROUND, padx=20, pady=15, bd=1, relief=tk.GROOVE, fg=COLOR_TEXT_MEDIUM)
         self.additional_frame.pack(fill="x", padx=10, pady=10)
 
-        additional_grid_frame = tk.Frame(self.additional_frame, bg="#f8f9fa")
+        additional_grid_frame = tk.Frame(self.additional_frame, bg=COLOR_FRAME_BACKGROUND)
         additional_grid_frame.pack(fill="both", expand=True)
 
-        # --- NEW: Labels to display calculated additional costs ---
         self.additional_cost_labels = {}
-        # Use the keys from the additional_price_per_day dictionary for order and titles
         for i, (cost_name, daily_rate) in enumerate(self.additional_price_per_day.items()):
-             tk.Label(additional_grid_frame, text=cost_name + ":", font=("Arial", 12, "bold"), bg="#f8f9fa", fg="#333333").grid(row=i, column=0, sticky="w", padx=5, pady=3)
-             # Label to display the calculated amount
-             self.additional_cost_labels[cost_name] = tk.Label(additional_grid_frame, text="Đang tính...", font=("Arial", 12), bg="#f8f9fa", fg="#000000")
+             tk.Label(additional_grid_frame, text=cost_name + ":", font=("Arial", 12, "bold"), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK).grid(row=i, column=0, sticky="w", padx=5, pady=3)
+             self.additional_cost_labels[cost_name] = tk.Label(additional_grid_frame, text="Đang tính...", font=("Arial", 12), bg=COLOR_FRAME_BACKGROUND, fg=COLOR_TEXT_DARK)
              self.additional_cost_labels[cost_name].grid(row=i, column=1, sticky="ew", padx=5, pady=3)
-             # We no longer need a separate VND label if the amount includes it,
-             # but keeping it helps alignment if the amount label text varies
-             # tk.Label(additional_grid_frame, text=" VND", font=("Arial", 12), bg="#f8f9fa", fg="#333333").grid(row=i, column=2, sticky="w", padx=0, pady=3)
 
-        # Add weight to column 1 for the cost amount labels
+
         additional_grid_frame.columnconfigure(1, weight=1)
-        # --- End NEW ---
 
 
         # Separator
-        separator_additional_to_total = tk.Frame(self.mainPanel, height=1, bg="#cccccc")
+        separator_additional_to_total = tk.Frame(self.mainPanel, height=1, bg=COLOR_BORDER_GRAY)
         separator_additional_to_total.pack(fill="x", padx=10, pady=15)
 
         # Result Label (Total Cost)
-        self.result_label = tk.Label(self.mainPanel, text="Tổng tiền: Đang tính...", font=("Arial", 20, "bold"), fg="#007bff", bg="#ffffff")
+        self.result_label = tk.Label(self.mainPanel, text="Tổng tiền: Đang tính...", font=("Arial", 20, "bold"), fg=COLOR_PRIMARY_BLUE, bg=COLOR_MAIN_PANEL_BG)
         self.result_label.pack(pady=(10, 20))
 
         # Button Frame
-        self.button_frame = tk.Frame(self.mainPanel, bg="#ffffff")
+        self.button_frame = tk.Frame(self.mainPanel, bg=COLOR_MAIN_PANEL_BG)
         self.button_frame.pack(pady=(0, 10))
+
+        button_font = ("Arial", 12, "bold")
+        button_pady = 8
+        button_padx = 15
 
         # Calculate Button
         self.calculate_btn = tk.Button(
-            self.button_frame, text="TÍNH TIỀN", font=("Arial", 12, "bold"), fg="white", bg="#28a745",
-            activebackground="#218838", activeforeground="white",
-            relief=tk.RAISED, padx=15, pady=8, cursor="hand2",
-            command=self.load_and_calculate # This method now also calculates and displays additional costs
+            self.button_frame, text="TÍNH TIỀN", font=button_font, fg="white", bg=COLOR_ACCENT_GREEN,
+            activebackground="#1e7e34", activeforeground="white",
+            relief=tk.RAISED, padx=button_padx, pady=button_pady, cursor="hand2",
+            command=self.load_and_calculate
         )
         self.calculate_btn.pack(side=tk.LEFT, padx=5)
 
         # Export Button
         self.export_btn = tk.Button(
-            self.button_frame, text="XUẤT FILE WORD", font=("Arial", 12, "bold"), fg="white", bg="#17a2b8",
-            activebackground="#138496", activeforeground="white",
-            relief=tk.RAISED, padx=15, pady=8, cursor="hand2",
+            self.button_frame, text="XUẤT FILE WORD", font=button_font, fg="white", bg=COLOR_ACCENT_TEAL,
+            activebackground="#117a8b", activeforeground="white",
+            relief=tk.RAISED, padx=button_padx, pady=button_pady, cursor="hand2",
             command=self.export_invoice_to_word
         )
         self.export_btn.pack(side=tk.LEFT, padx=5)
 
 
-    # --- Update the load_and_calculate method ---
+    # --- Helper to process raw date input (string or datetime) into datetime object ---
+    def _process_date_input_to_datetime(self, raw_date_value):
+         """Converts raw date input (string or datetime) to a datetime object or None."""
+         if isinstance(raw_date_value, datetime):
+              return raw_date_value # Already a datetime object
+         elif isinstance(raw_date_value, date): # Handle date objects too
+              return datetime.combine(raw_date_value, datetime.min.time()) # Convert date to datetime
+         elif isinstance(raw_date_value, str) and raw_date_value:
+              try:
+                   # Try parsing from YYYY-MM-DD string
+                   return datetime.strptime(raw_date_value, "%Y-%m-%d")
+              except ValueError:
+                   print(f"Warning: Could not parse date string '{raw_date_value}'. Expected YYYY-MM-DD.")
+                   return None
+         else:
+              return None # None, empty string, or other types are treated as no date
+
+
+    # --- Calculate Base Room Cost from Duration ---
+    def calculate_room_cost_from_duration(self, duration, room_type):
+        """Calculates the base room cost based on duration and room type."""
+        if duration is None or duration <= 0:
+            return 0
+
+        room_rate = self.price_per_day.get(room_type, 250000)
+        return duration * room_rate
+
+    # --- load_and_calculate method (Refined Label Updating) ---
     def load_and_calculate(self):
         """Loads customer info, calculates costs (room + additional), and updates display."""
         customer_data = self.controller
 
         if not customer_data:
              messagebox.showwarning("Cảnh báo", "Không có dữ liệu khách hàng để tạo hóa đơn.")
-             # Clear customer/room info labels
-             for _, label_widget in self.labels.items():
-                  label_widget.config(text="Không có dữ liệu")
+             # Clear customer/room info labels (use self.labels keys or self.info_fields)
+             for field in self.labels.keys(): # Iterate through existing label keys
+                 if field != "room_type": # Exclude room_type which is handled separately
+                     self.labels[field].config(text="Không có dữ liệu")
+
              self.checkin_date_label.config(text="N/A")
              self.checkout_date_label.config(text="N/A")
-             self.result_label.config(text="Tổng tiền: N/A", fg="#dc3545")
-             # Clear additional cost display labels
+             self.labels["room_type"].config(text="Không có dữ liệu") # Clear room type
              for _, label_widget in self.additional_cost_labels.items():
                   label_widget.config(text="N/A")
+             self.result_label.config(text="Tổng tiền: N/A", fg=COLOR_ACCENT_RED)
              return
 
-        # Populate ALL info fields (customer details and room type) - Keep this part
-        for attr_name, label_widget in self.labels.items():
-            value = getattr(customer_data, attr_name, "Không có dữ liệu")
-            label_widget.config(text=value if value else "Không có dữ liệu")
-
-        # Get check-in date and room type
-        checkin_date_str = getattr(customer_data, "checkin_date", None)
+        # Get raw check-in date data and room type from the controller object
+        raw_checkin_date = getattr(customer_data, "checkin_date", None)
         room_type = getattr(customer_data, "room_type", "Normal")
 
-        # --- Calculate Duration ---
+        # --- Process Raw Check-in Date ---
+        checkin_dt = self._process_date_input_to_datetime(raw_checkin_date)
         duration = 0
-        checkin_display = "N/A"
-        checkout_display = datetime.today().strftime("%d/%m/%Y") # Default to today's date formatted
+        checkin_display = "N/A" # Initialize display string
+        checkout_display = datetime.today().strftime("%Y-%m-%d") # Use YYYY-MM-DD format for display
 
-        if checkin_date_str:
-            try:
-                checkin = datetime.strptime(checkin_date_str, "%Y-%m-%d")
-                checkout = datetime.today() # Use today's date as checkout
-                if checkout >= checkin:
-                    duration = (checkout - checkin).days
-                    if duration < 0: duration = 0 # Should not happen if checkout >= checkin
-                checkin_display = checkin.strftime("%d/%m/%Y") # Format for display
-            except ValueError:
-                messagebox.showwarning("Cảnh báo", f"Ngày nhận phòng '{checkin_date_str}' có định dạng không hợp lệ.")
-                checkin_display = "Lỗi định dạng"
-                duration = 0 # Reset duration on error
+        if checkin_dt:
+            checkout_dt = datetime.today() # datetime object for calculation
+            if checkout_dt >= checkin_dt:
+                duration = (checkout_dt - checkin_dt).days
+                if duration < 0: duration = 0
+            else:
+                 messagebox.showwarning("Lỗi", "Ngày trả phòng không hợp lệ (trước ngày nhận phòng).")
+                 duration = 0
+
+            checkin_display = checkin_dt.strftime("%Y-%m-%d") # Format the valid datetime object for display (YYYY-MM-DD)
         else:
-            messagebox.showwarning("Cảnh báo", "Không có ngày nhận phòng để tính tiền.")
+             messagebox.showwarning("Cảnh báo", "Ngày nhận phòng không hợp lệ hoặc không có dữ liệu.")
+             # checkin_display remains "N/A"
 
-        # Update date display labels
+
+        # --- Update GUI display labels ---
+
+        # Cập nhật nhãn Ngày Nhận Phòng TRỰC TIẾP (không qua vòng lặp self.labels)
         self.checkin_date_label.config(text=checkin_display)
+
+        # Cập nhật nhãn Ngày Trả Phòng TRỰC TIẾP
         self.checkout_date_label.config(text=checkout_display)
-        # --- End Calculate Duration ---
+
+        # Cập nhật các nhãn Thông tin Khách hàng khác từ self.info_fields (trừ ngày)
+        # Sử dụng self.info_fields để lặp qua các trường
+        for title, field in self.info_fields:
+             value = getattr(customer_data, field, "Không có dữ liệu")
+             if field == "birthday":
+                  # Xử lý định dạng ngày sinh (nhãn này nằm trong self.labels)
+                  birthday_dt = self._process_date_input_to_datetime(value)
+                  display_value = birthday_dt.strftime("%Y-%m-%d") if birthday_dt else "N/A"
+             # Ngày nhận phòng đã được xử lý và cập nhật nhãn riêng bên trên, bỏ qua ở đây
+             # elif field == "checkin_date": pass
+             else:
+                  # Đối với các trường thông tin khác (name, sex, national, country)
+                  display_value = str(value) if value is not None else "Không có dữ liệu"
+
+             # Kiểm tra và cập nhật nhãn trong dictionary self.labels
+             if field in self.labels:
+                  self.labels[field].config(text=display_value)
+
+        # Cập nhật nhãn Loại Phòng (nằm trong self.labels nhưng xử lý riêng)
+        self.labels["room_type"].config(text=str(room_type) if room_type is not None else "Không có dữ liệu")
 
 
-        # --- Calculate Base Room Cost ---
-        # calculate_room_cost now only needs checkin_date_str and room_type,
-        # it will calculate duration internally as before, or we could pass duration
-        # Let's reuse the duration calculated above for consistency
+        # --- Calculate Base Room Cost --- (Sử dụng duration đã tính)
         base_room_cost = self.calculate_room_cost_from_duration(duration, room_type)
-        # --- End Calculate Base Room Cost ---
 
 
-        # --- NEW: Calculate and display additional costs ---
+        # --- Calculate and display additional costs --- (Sử dụng duration đã tính)
         additional_cost_sum = 0
         for cost_name, daily_rate in self.additional_price_per_day.items():
-            cost = daily_rate * duration # Calculate cost based on daily rate and duration
+            cost = daily_rate * duration
             additional_cost_sum += cost
-            # Update the specific label for this additional cost
             if cost_name in self.additional_cost_labels:
                 self.additional_cost_labels[cost_name].config(text=format_currency(cost))
-            else:
-                print(f"Warning: Label for {cost_name} not found.") # Debugging line
-        # --- End NEW ---
+            # else: (Warning already printed if label not found)
 
 
         # Calculate final total
@@ -254,27 +306,99 @@ class Checkout(tk.Frame):
         # Format the final total for display
         formatted_total = format_currency(final_total)
 
-        self.result_label.config(text=f"TỔNG TIỀN: {formatted_total}", fg="#28a745" if final_total >= 0 else "#dc3545")
+        self.result_label.config(text=f"TỔNG TIỀN: {formatted_total}", fg=COLOR_ACCENT_GREEN if final_total >= 0 else COLOR_ACCENT_RED)
+
+    # --- load_and_calculate method (FIXED NameError: 'fields' is not defined) ---
+    # def load_and_calculate(self):
+    #     """Loads customer info, calculates costs (room + additional), and updates display."""
+    #     customer_data = self.controller
+    #
+    #     if not customer_data:
+    #          messagebox.showwarning("Cảnh báo", "Không có dữ liệu khách hàng để tạo hóa đơn.")
+    #          # Clear customer/room info labels (use self.labels keys or self.info_fields)
+    #          for field in self.labels.keys(): # Iterate through existing label keys
+    #              if field != "room_type": # Exclude room_type which is handled separately
+    #                  self.labels[field].config(text="Không có dữ liệu")
+    #
+    #          self.checkin_date_label.config(text="N/A")
+    #          self.checkout_date_label.config(text="N/A")
+    #          self.labels["room_type"].config(text="Không có dữ liệu") # Clear room type
+    #          for _, label_widget in self.additional_cost_labels.items():
+    #               label_widget.config(text="N/A")
+    #          self.result_label.config(text="Tổng tiền: N/A", fg=COLOR_ACCENT_RED)
+    #          return
+    #
+    #     # Get raw check-in date data and room type from the controller object
+    #     raw_checkin_date = getattr(customer_data, "checkin_date", None)
+    #     room_type = getattr(customer_data, "room_type", "Normal")
+    #
+    #     # --- Process Raw Check-in Date ---
+    #     checkin_dt = self._process_date_input_to_datetime(raw_checkin_date)
+    #     duration = 0
+    #     checkin_display = "N/A"
+    #     checkout_display = datetime.today().strftime("%Y-%m-%d") # YYYY-MM-DD format for display
+    #
+    #     if checkin_dt:
+    #         checkout_dt = datetime.today() # datetime object for calculation
+    #         if checkout_dt >= checkin_dt:
+    #             duration = (checkout_dt - checkin_dt).days
+    #             if duration < 0: duration = 0
+    #         else:
+    #              messagebox.showwarning("Lỗi", "Ngày trả phòng không hợp lệ (trước ngày nhận phòng).")
+    #              duration = 0 # Reset duration on invalid date range
+    #
+    #         checkin_display = checkin_dt.strftime("%Y-%m-%d") # YYYY-MM-DD format for display
+    #     else:
+    #          messagebox.showwarning("Cảnh báo", "Ngày nhận phòng không hợp lệ hoặc không có dữ liệu.")
+    #
+    #
+    #     # Update GUI display labels for dates and info fields
+    #     # Use self.info_fields to iterate through fields including birthday
+    #     for title, field in self.info_fields: # Use self.info_fields
+    #          value = getattr(customer_data, field, "Không có dữ liệu")
+    #          if field == "birthday": # Handle birthday formatting here
+    #               birthday_dt = self._process_date_input_to_datetime(value)
+    #               display_value = birthday_dt.strftime("%Y-%m-%d") if birthday_dt else "N/A"
+    #          elif field == "checkin_date": # Handle checkin_date using the processed checkin_display
+    #               display_value = checkin_display
+    #          else:
+    #               display_value = str(value) if value is not None else "Không có dữ liệu"
+    #
+    #          if field in self.labels: # Ensure label exists before config
+    #               self.labels[field].config(text=display_value)
+    #
+    #     # Handle Room Type label
+    #     self.labels["room_type"].config(text=str(room_type) if room_type is not None else "Không có dữ liệu")
+    #
+    #     # Update checkout date label (always uses today's date)
+    #     self.checkout_date_label.config(text=checkout_display)
+    #
+    #
+    #     # --- Calculate Base Room Cost ---
+    #     base_room_cost = self.calculate_room_cost_from_duration(duration, room_type)
+    #
+    #
+    #     # --- Calculate and display additional costs ---
+    #     additional_cost_sum = 0
+    #     for cost_name, daily_rate in self.additional_price_per_day.items():
+    #         cost = daily_rate * duration
+    #         additional_cost_sum += cost
+    #         if cost_name in self.additional_cost_labels:
+    #             self.additional_cost_labels[cost_name].config(text=format_currency(cost))
+    #         else:
+    #             print(f"Warning: Label for {cost_name} not found.")
+    #
+    #
+    #     # Calculate final total
+    #     final_total = base_room_cost + additional_cost_sum
+    #
+    #     # Format the final total for display
+    #     formatted_total = format_currency(final_total)
+    #
+    #     self.result_label.config(text=f"TỔNG TIỀN: {formatted_total}", fg=COLOR_ACCENT_GREEN if final_total >= 0 else COLOR_ACCENT_RED)
 
 
-    # --- Modified calculate_room_cost to accept duration (optional, but cleaner) ---
-    # Renaming for clarity as it now uses pre-calculated duration
-    def calculate_room_cost_from_duration(self, duration, room_type):
-        """Calculates the base room cost based on duration and room type."""
-        if duration <= 0:
-            return 0
-
-        room_rate = self.price_per_day.get(room_type, 250000) # Default to normal rate
-        return duration * room_rate
-
-    # Keep the original calculate_room_cost if you need it elsewhere,
-    # but the logic for load_and_calculate is updated to use duration directly.
-    # Or just replace the old one if this is the only place it's used for calculation.
-    # Let's replace the old one and rename it.
-    # (The old calculate_room_cost is now replaced by calculate_room_cost_from_duration)
-
-
-    # --- Update the export_invoice_to_word method ---
+    # --- export_invoice_to_word method (FIXED NameError: 'info_fields' is not defined) ---
     def export_invoice_to_word(self):
         customer_data = self.controller
 
@@ -282,68 +406,61 @@ class Checkout(tk.Frame):
             messagebox.showwarning("Cảnh báo", "Không có dữ liệu khách hàng để xuất hóa đơn.")
             return
 
-        # Get file path from user
         filepath = filedialog.asksaveasfilename(
             defaultextension=".docx",
             filetypes=[("Word Documents", "*.docx"), ("All Files", "*.*")],
             title="Lưu Hóa Đơn Dạng Word"
         )
 
-        if not filepath: # User cancelled the dialog
+        if not filepath:
             return
 
         try:
-            # Create a new Word document
             document = Document()
-
-            # Add Title
             title = document.add_paragraph("HÓA ĐƠN THANH TOÁN")
             title.alignment = WD_ALIGN_PARAGRAPH.CENTER
             title.style = 'Heading 1'
 
-            # Add Customer Info - Keep this part
+            # Add Customer Info
             document.add_paragraph("THÔNG TIN KHÁCH HÀNG", style='Heading 2')
-            fields = [
-                ("Họ tên", "name"),
-                ("Giới tính", "sex"),
-                ("Ngày sinh", "birthday"),
-                ("Quốc tịch", "national"),
-                ("Quê quán", "country"),
-            ]
-            for title, field in fields:
+            # Use self.info_fields
+            for title, field in self.info_fields:
                 value = getattr(customer_data, field, "Không có dữ liệu")
+                # Format dates for document (expecting YYYY-MM-DD string or datetime)
+                if field in ["birthday"] and isinstance(value, (datetime, date)):
+                     display_value = value.strftime("%Y-%m-%d") # YYYY-MM-DD for document
+                else:
+                     display_value = str(value) if value is not None else "Không có dữ liệu"
+
+
                 p = document.add_paragraph()
                 p.add_run(title + ": ").bold = True
-                p.add_run(str(value) if value else "Không có dữ liệu")
+                p.add_run(display_value)
 
-            # Add Room Details - Keep this part
-            document.add_paragraph("CHI TIẾT THUÊ PHÒNG", style='Heading 2')
 
-            room_type = getattr(customer_data, "room_type", "Không xác định")
-            p_room = document.add_paragraph()
-            p_room.add_run("Loại phòng: ").bold = True
-            p_room.add_run(str(room_type) if room_type else "Không xác định")
+            # --- Process Check-in Date for Document ---
+            raw_checkin_date = getattr(customer_data, "checkin_date", None)
+            room_type = getattr(customer_data, "room_type", "Normal")
 
-            checkin_date_str = getattr(customer_data, "checkin_date", None)
-
-            # --- Recalculate Duration for Document ---
+            checkin_dt = self._process_date_input_to_datetime(raw_checkin_date)
             duration = 0
             checkin_display = "N/A"
-            checkout_display = datetime.today().strftime("%d/%m/%Y")
+            checkout_display = datetime.today().strftime("%Y-%m-%d") # YYYY-MM-DD for document
 
-            if checkin_date_str:
-                 try:
-                      checkin = datetime.strptime(checkin_date_str, "%Y-%m-%d")
-                      checkout = datetime.today()
-                      if checkout >= checkin:
-                           duration = (checkout - checkin).days
-                           if duration < 0: duration = 0
-                      checkin_display = checkin.strftime("%d/%m/%Y")
-                 except ValueError:
-                      checkin_display = "Lỗi định dạng ngày"
-                      duration = 0
-            # --- End Recalculate Duration ---
+            if checkin_dt:
+                checkout_dt = datetime.today()
+                if checkout_dt >= checkin_dt:
+                    duration = (checkout_dt - checkin_dt).days
+                    if duration < 0: duration = 0
+                checkin_display = checkin_dt.strftime("%Y-%m-%d") # YYYY-MM-DD for document
 
+
+            # Add Room Details (using calculated duration/dates)
+            document.add_paragraph("CHI TIẾT THUÊ PHÒNG", style='Heading 2')
+
+            p_room = document.add_paragraph()
+            p_room.add_run("Loại phòng: ").bold = True
+            p_room.add_run(str(room_type) if room_type is not None else "Không có dữ liệu")
 
             p_checkin = document.add_paragraph()
             p_checkin.add_run("Ngày nhận phòng: ").bold = True
@@ -357,37 +474,33 @@ class Checkout(tk.Frame):
             p_duration.add_run("Tổng số ngày thuê: ").bold = True
             p_duration.add_run(f"{duration} ngày")
 
+
             # --- Calculate Base Room Cost for Document ---
             base_room_cost = self.calculate_room_cost_from_duration(duration, room_type)
-            # --- End Calculate Base Room Cost ---
 
 
-            # --- NEW: Calculate and add Additional Costs to Word ---
+            # --- Calculate and add Additional Costs to Word ---
             document.add_paragraph("CHI PHÍ PHỤ", style='Heading 2')
 
             additional_cost_sum = 0
             for cost_name, daily_rate in self.additional_price_per_day.items():
-                cost = daily_rate * duration # Calculate cost
+                cost = daily_rate * duration
                 additional_cost_sum += cost
 
                 p_cost = document.add_paragraph()
                 p_cost.add_run(cost_name + ": ").bold = True
-                p_cost.add_run(format_currency(cost)) # Format individual cost
-            # --- End NEW ---
+                p_cost.add_run(format_currency(cost))
 
 
-            # Add Total Cost (includes base room cost + additional costs)
+            # Add Total Cost
             final_total = base_room_cost + additional_cost_sum
-
-            document.add_paragraph("") # Add a blank line for spacing
+            document.add_paragraph("")
             p_total = document.add_paragraph()
             p_total.add_run("TỔNG TIỀN: ").bold = True
             p_total.add_run(format_currency(final_total)).bold = True
             p_total.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 
-            # Save the document
             document.save(filepath)
-
             messagebox.showinfo("Thành công", f"Đã xuất hóa đơn ra file:\n{filepath}")
 
         except Exception as e:
