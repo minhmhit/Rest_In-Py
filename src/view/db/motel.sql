@@ -14,9 +14,9 @@ CREATE TABLE staffs (
 
 -- Staff data
 INSERT INTO staffs (id, name, sex, birthday, role, username, password, permissions) VALUES
-(1, 'Nguyễn Văn A', 'Nam', '1990-01-01', 'Admin', 'admin1', 'admin', 'Toàn quyền'),
-(2, 'Lê Thị B', 'Nữ', '1992-03-10', 'Lễ tân', 'recept1', 'recept', 'Đặt phòng, thanh toán'),
-(3, 'Trần Văn C', 'Nam', '1985-06-20', 'Bảo vệ', 'guard1', 'guard', 'Camera');
+(1, 'Nguyễn Văn A', 'Nam', '1990-01-01', 'Quản Trị Viên', 'admin1', 'admin', 'Toàn quyền'),
+(2, 'Lê Thị B', 'Nữ', '1992-03-10', 'Quản Lí', 'recept1', 'recept', 'Đặt phòng, thanh toán'),
+(3, 'Trần Văn C', 'Nam', '1985-06-20', 'Nhân Viên', 'guard1', 'guard', 'Camera');
 
 -- Customer table structure
 CREATE TABLE customers (

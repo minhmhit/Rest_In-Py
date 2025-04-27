@@ -17,9 +17,11 @@ import cv2  # Import cv2 at the top level
 class App(tk.Tk):
     def __init__(self, customer_list, staff_list):
         super().__init__()
+        self.is_fullscreen = False
         self.title("Quản Lí Nhà Trọ")
         self.geometry("1280x720")
         self.configure(bg="#3B82F6")
+        self.bind("<F11>", self.toggle_fullscreen)
 
         self.customer_list = customer_list
         self.staff_list = staff_list
@@ -51,6 +53,10 @@ class App(tk.Tk):
 
         # close all buffer after delete window
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def toggle_fullscreen(self,event=None):
+        self.is_fullscreen = not self.is_fullscreen
+        self.attributes("-fullscreen", self.is_fullscreen)
 
     def show_main(self):
         self.login_frame.pack_forget()  # hide login page

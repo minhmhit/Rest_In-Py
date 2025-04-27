@@ -19,3 +19,11 @@ class StaffInfo:
         if self.password is None: return True
         if self.permissions is None: return True
         return False
+
+    def get_values_for_treeview(self):
+        """Returns a tuple of values in the correct order for Treeview display (YYYY-MM-DD)."""
+        return (
+            self.id, self.name, self.sex, self.birthday,
+            self.role, self.username, self.password,
+            self.permissions,
+        )

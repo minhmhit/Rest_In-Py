@@ -423,12 +423,17 @@ class Customer(tk.Frame):
                  entries[field] = widget
             elif field in ["birthday", "checkin_date"]:
                  # Use an Entry (readonly) and a button for dates (Calendar outputs YYYY-MM-DD)
-                 entry = tk.Entry(padding_frame, font=("Arial", 10), state="readonly")
+                 entry = tk.Entry(padding_frame, font=("Arial", 10), state="normal")
                  entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
                  entry.insert(0, current_value_str) # Insert current YYYY-MM-DD string
+                 entry.config(state="readonly")
+
+                 # button
                  entries[field] = entry
                  date_button_command = self.create_calendar_command(padding_frame, entry, field)
-                 date_button = tk.Button(padding_frame, text="Chọn ngày", command=date_button_command, font=("Arial", 8), padx=2, pady=2)
+                 date_button = tk.Button(padding_frame, text="Chọn ngày", command=date_button_command, font=("Arial", 8, "bold"),
+                                         bg=COLOR_ACCENT_TEAL, fg="white", activebackground="#117a8b", activeforeground="white",
+                                         relief=tk.RAISED, padx=5, pady=2, cursor="hand2")
                  date_button.grid(row=i, column=2, padx=(0, 5), pady=5, sticky="w")
             else:
                 # Standard Entry for other fields (name, national, country, room_number)
