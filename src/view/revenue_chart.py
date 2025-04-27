@@ -1,181 +1,562 @@
 import tkinter as tk
-from tkinter import ttk, Toplevel, Label
+from tkinter import ttk, Toplevel, Label, messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from datetime import datetime
+from datetime import datetime, date # Import date as well
+import locale
+import calendar # Import calendar module for month names
+
+from customer_information import CustomerInfo # Assuming this exists and has attributes
+
+# --- Define colors --- (Keep consistent with other files)
+COLOR_PRIMARY_BLUE = "#3B82F6"      # Màu xanh dương chính
+COLOR_PRIMARY_BLUE_DARK = "#0056b3" # Darker blue for hover/active
+COLOR_ACCENT_GREEN = "#28a745"      # Green for success actions
+COLOR_ACCENT_RED = "#dc3545"        # Red for danger actions
+COLOR_ACCENT_TEAL = "#17a2b8"       # Teal for info/export actions
+COLOR_BACKGROUND_LIGHT = "#eef2f7"  # Light background for main frame
+COLOR_FRAME_BACKGROUND = "#f8f9fa"  # Slightly gray background for panels/frames
+COLOR_MAIN_PANEL_BG = "#ffffff"     # White background for main content areas
+COLOR_TEXT_DARK = "#333333"    # Dark gray for primary text
+COLOR_TEXT_MEDIUM = "#555555" # Medium gray for secondary text/frame titles
+COLOR_BORDER_GRAY = "#cccccc"       # Light gray border
+COLOR_WHITE = "#ffffff" # White color
+COLOR_TEXT_PLACEHOLDER = "gray" # Gray color for placeholder text
+
+# --- Currency Formatting ---
+try:
+    # Set locale for Vietnamese currency formatting
+    locale.setlocale(locale.LC_ALL, 'vi_VN.UTF-8')
+except locale.Error:
+    try:
+        # Fallback for Windows
+        locale.setlocale(locale.LC_ALL, 'Vietnamese_Vietnam.1258')
+    except locale.Error:
+        print("Warning: Could not set Vietnamese locale for currency formatting in RevenueChart.")
+        # Define a basic formatting function if locale fails
+        def format_currency(amount):
+            # Basic format: add commas for thousands, round to 0 decimals, add VND
+            return f"{amount:,.0f}".replace(",", ".") + " VND"
+    else:
+        # Use locale.currency if fallback worked
+        def format_currency(amount):
+            return locale.currency(amount, grouping=True, symbol=" VND")
+else:
+     # Use locale.currency if primary locale worked
+     def format_currency(amount):
+        return locale.currency(amount, grouping=True, symbol=" VND")
+
+# Ensure format_currency is defined even if all locale settings fail
+if 'format_currency' not in locals():
+     def format_currency(amount):
+            return f"{amount:,.0f}".replace(",", ".") + " VND"
+# --- End Currency Formatting ---
 
 class RevenueChart(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent, bg="#F5F5F5")
-        self.pack(fill=tk.BOTH, expand=True)
-        self.customer_list = [
-            (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2008-12-05", "VIP", 150.00 ,103),
-            (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Trà Vinh", "2011-05-03", "Thường", 80.00,101),
-            (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Hồ Chí Minh", "2011-09-16", "VIP", 150.00,204),
-            (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Hà Nội", "2009-12-31", "Thường", 80.00,202),
-            (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bạc Liêu", "2013-10-16", "Thường", 80.00,301),
-            (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hải Phòng", "2017-02-10", "Thường", 80.00,305),
-            (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Việt Nam", "2018-01-30", "VIP", 150.00,901),
-            (8, "Vũ Ngọc Linh", "Nữ", "1991-06-25", "Việt Nam", "Việt Nam", "2000-04-22", "Thường", 80.00,902),
-            (9, "Đoàn Văn Hải", "Nam", "1984-03-17", "Việt Nam", "Việt Nam", "2018-10-04", "Thường", 80.00,604),
-            (10, "Lý Thu Trang", "Nữ", "1993-09-29", "Việt Nam", "Việt Nam", "2018-12-19", "Thường", 80.00,502),
-            (11, "Nguyễn Văn Bình", "Nam", "1982-07-21", "Việt Nam", "Đà Nẵng", "2020-05-28", "VIP", 150.00,405),
-            (12, "Phạm Thanh Mai", "Nữ", "1994-03-12", "Việt Nam", "Cần Thơ", "2020-06-17", "Thường", 80.00,204),
-        ]
+    # Receive customer_list from the parent (App)
+    def __init__(self, parent, customer_list):
+        super().__init__(parent, bg=COLOR_BACKGROUND_LIGHT) # Use consistent background
 
-        # tạo biểu đồ
+        # Store the received customer list
+        self.customer_list = customer_list
+
+        # Define price per day for room types (assuming this is fixed or accessible)
+        self.price_per_day = {"VIP": 400000, "Thường": 250000} # Example prices
+
+        # Dictionaries to store processed data (will be populated in process_revenue_data)
+        self.revenue_by_year = {}
+        self.customer_count_by_year = {}
+        self.province_revenue_by_year = {}
+        self.revenue_by_month_year = {} # New: Revenue by Month/Year (format "YYYY-MM")
+
+        self.province_colors = {} # Store province and color mapping for the chart
+
+
+        # Create the widgets (Notebook, frames for tabs)
         self.create_widgets()
 
-    def create_widgets(self):
-        # --- Xử lý Dữ liệu ---
-        revenue_by_year = {} # Doanh thu theo năm
-        customer_count_by_year = {} # Số lượng khách hàng theo năm
-        province_revenue_by_year = {} # Doanh thu theo tỉnh theo năm
+        # Process data and update charts after widgets are ready
+        self.process_revenue_data()
+        self.update_charts()
+
+
+    # --- Helper to process raw date input (string or datetime) into datetime object ---
+    # Copy this method from Customer/Checkout/StaffManagement classes
+    def _process_date_input_to_datetime(self, raw_date_value):
+         """Converts raw date input (string or datetime) to a datetime object or None."""
+         if isinstance(raw_date_value, datetime):
+              return raw_date_value # Already a datetime object
+         elif isinstance(raw_date_value, date): # Handle date objects too
+              # Combine date object with min time to make it a datetime object
+              return datetime.combine(raw_date_value, datetime.min.time())
+         elif isinstance(raw_date_value, str) and raw_date_value.strip(): # Check for non-empty string after stripping whitespace
+              try:
+                   # Try parsing from YYYY-MM-DD string
+                   return datetime.strptime(raw_date_value.strip(), "%Y-%m-%d") # Strip whitespace before parsing
+              except ValueError:
+                   # If YYYY-MM-DD fails, try other common formats if necessary,
+                   # but for consistency, we expect YYYY-MM-DD.
+                   print(f"Warning: Could not parse date string '{raw_date_value.strip()}'. Expected YYYY-MM-DD.")
+                   return None
+         else:
+              return None # None, empty string, or other types are treated as no date
+
+
+    # --- Process Customer Data to Aggregate Revenue ---
+    def process_revenue_data(self):
+        """
+        Processes the customer list to calculate revenue and customer counts
+        aggregated by year, month/year, and province/year.
+        Populates self.revenue_by_year, self.customer_count_by_year,
+        self.province_revenue_by_year, self.revenue_by_month_year.
+        """
+        # Clear previous data before processing
+        self.revenue_by_year.clear()
+        self.customer_count_by_year.clear()
+        self.province_revenue_by_year.clear()
+        self.revenue_by_month_year.clear()
+
+        today = datetime.today()
+
+        if not self.customer_list:
+            print("No customer data to process for revenue charts.")
+            return # Exit if list is empty
 
         for customer in self.customer_list:
-            join_date_str = customer[6] # Ngày tham gia
-            revenue = customer[7] == "VIP" and customer[8] or customer[8] # Doanh thu
-            year = datetime.strptime(join_date_str, "%Y-%m-%d").year # Năm
-            province = customer[5] # Tỉnh
+            # Get check-in date, province, and room type from CustomerInfo object
+            raw_checkin_date = getattr(customer, 'checkin_date', None)
+            province = getattr(customer, 'country', 'Unknown') # Use 'country' for province/city, default to 'Unknown'
+            room_type = getattr(customer, 'room_type', None)
 
-            # Tổng Doanh thu theo Năm
-            if year not in revenue_by_year:
-                revenue_by_year[year] = 0
-            revenue_by_year[year] += revenue
+            # Process the check-in date into a datetime object
+            checkin_dt = self._process_date_input_to_datetime(raw_checkin_date)
 
-            # Số lượng Khách hàng theo Năm
-            if year not in customer_count_by_year:
-                customer_count_by_year[year] = 0
-            customer_count_by_year[year] += 1
+            # Ensure we have a valid check-in date and known room type
+            if checkin_dt and room_type in self.price_per_day:
+                # Calculate duration in days (from check-in to today)
+                duration = (today - checkin_dt).days
 
-            # Doanh thu Tỉnh theo Năm
-            if year not in province_revenue_by_year:
-                province_revenue_by_year[year] = {}
-            if province not in province_revenue_by_year[year]:
-                province_revenue_by_year[year][province] = 0
-            province_revenue_by_year[year][province] += revenue
+                # Only consider non-negative duration (customer checked in before or on today)
+                if duration >= 0:
+                    # Get the price per day for the room type, default to 0 if not found
+                    price = self.price_per_day.get(room_type, 0)
+                    # Calculate revenue for this customer's stay duration
+                    revenue = duration * price
 
-        years = sorted(revenue_by_year.keys()) # Các năm
+                    # --- Aggregate Data ---
 
-        # --- Notebook cho các Biểu đồ khác nhau ---
-        notebook = ttk.Notebook(self)
-        notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+                    # Get year and month for aggregation
+                    year = checkin_dt.year
+                    month_year = checkin_dt.strftime("%Y-%m") # Format as "YYYY-MM"
 
-        # --- Style cho Frame ---
+                    # 1. Total Revenue by Year
+                    if year not in self.revenue_by_year:
+                         self.revenue_by_year[year] = 0
+                    self.revenue_by_year[year] += revenue
+
+                    # 2. Customer Count by Year (Counting check-ins per year)
+                    # This counts how many check-ins happened each year
+                    if year not in self.customer_count_by_year:
+                         self.customer_count_by_year[year] = 0
+                    self.customer_count_by_year[year] += 1 # Count each customer/check-in event
+
+                    # 3. Revenue by Province by Year
+                    if year not in self.province_revenue_by_year:
+                         self.province_revenue_by_year[year] = {}
+                    if province not in self.province_revenue_by_year[year]:
+                         self.province_revenue_by_year[year][province] = 0
+                    self.province_revenue_by_year[year][province] += revenue
+
+                    # 4. Revenue by Month/Year
+                    if month_year not in self.revenue_by_month_year:
+                        self.revenue_by_month_year[month_year] = 0
+                    self.revenue_by_month_year[month_year] += revenue
+
+        print("Revenue data processed successfully.")
+        print(f"Revenue by Year: {self.revenue_by_year}")
+        print(f"Revenue by Month/Year: {self.revenue_by_month_year}")
+        print(f"Customer Count by Year: {self.customer_count_by_year}")
+        print(f"Province Revenue by Year: {self.province_revenue_by_year}")
+
+
+    # --- Create Widgets (Notebook, Tab Frames) ---
+    def create_widgets(self):
+        """Sets up the Notebook and frames for each chart tab."""
+        # --- Notebook for different Charts ---
+        # Style for Notebook (optional, depends on theme, might not change appearance much)
+        # style = ttk.Style()
+        # style.configure("TNotebook", background=COLOR_BACKGROUND_LIGHT, borderwidth=0)
+        # style.configure("TNotebook.Tab", background=COLOR_FRAME_BACKGROUND, foreground=COLOR_TEXT_DARK)
+        # style.map("TNotebook.Tab", background=[("selected", COLOR_PRIMARY_BLUE)], foreground=[("selected", COLOR_WHITE)])
+
+
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10) # Add padding around the notebook
+
+        # --- Style for the Frames *inside* the Notebook tabs ---
+        # This style ensures the content area of each tab has the desired background
         style = ttk.Style()
-        style.configure("MyFrame.TFrame", background="#F5F5F5")
+        style.configure("ChartFrame.TFrame", background=COLOR_MAIN_PANEL_BG) # Use white background
 
-        # --- Biểu đồ Tổng Doanh thu ---
-        revenue_frame = ttk.Frame(notebook, style="MyFrame.TFrame")
-        notebook.add(revenue_frame, text="Tổng Doanh Thu")
-        self.create_revenue_chart(revenue_frame, years, [revenue_by_year.get(year, 0) for year in years])
 
-        # --- Biểu đồ Tăng trưởng Khách hàng ---
-        customer_frame = ttk.Frame(notebook, style="MyFrame.TFrame")
-        notebook.add(customer_frame, text="Tăng Trưởng Khách Hàng")
-        self.create_customer_chart(customer_frame, years, [customer_count_by_year.get(year, 0) for year in years])
+        # --- Frame for Total Revenue Chart ---
+        self.revenue_frame = ttk.Frame(self.notebook, style="ChartFrame.TFrame") # Apply style
+        self.notebook.add(self.revenue_frame, text="Tổng Doanh Thu (Năm)") # Use self. for instance attribute
 
-        # --- Biểu đồ Doanh thu theo Tỉnh ---
-        province_frame = ttk.Frame(notebook, style="MyFrame.TFrame")
-        notebook.add(province_frame, text="Doanh Thu theo Tỉnh")
-        self.province_revenue_data = province_revenue_by_year # Lưu trữ dữ liệu để dùng sau
-        self.province_colors = {} # Lưu trữ mapping tỉnh và màu
-        self.create_province_revenue_chart(province_frame, years, province_revenue_by_year)
+        # --- Frame for Customer Growth Chart ---
+        self.customer_frame = ttk.Frame(self.notebook, style="ChartFrame.TFrame") # Apply style
+        self.notebook.add(self.customer_frame, text="Tăng Trưởng Khách Hàng (Năm)") # Use self. for instance attribute
 
-        # Nút hiển thị màu sắc
-        color_button = ttk.Button(province_frame, text="Hiển thị Màu sắc Tỉnh", command=self.show_province_colors)
-        color_button.pack(pady=5)
+        # --- Frame for Revenue by Province Chart ---
+        self.province_frame = ttk.Frame(self.notebook, style="ChartFrame.TFrame") # Apply style
+        self.notebook.add(self.province_frame, text="Doanh Thu theo Tỉnh (Năm)") # Use self. for instance attribute
+
+        # --- Frame for Monthly Revenue Chart ---
+        self.monthly_revenue_frame = ttk.Frame(self.notebook, style="ChartFrame.TFrame") # Apply style
+        self.notebook.add(self.monthly_revenue_frame, text="Doanh Thu theo Tháng") # Use self. for instance attribute
+
+
+        # --- Button to show Province Color Legend (place in the province frame) ---
+        # Style the button consistently
+        button_font = ("Arial", 10, "bold")
+        button_pady = 5
+        button_padx = 10
+
+        self.color_button = tk.Button( # Use tk.Button for more styling control
+             self.province_frame, text="Hiển thị Chú giải Tỉnh", command=self.show_province_colors,
+             font=button_font, bg=COLOR_PRIMARY_BLUE, fg=COLOR_WHITE,
+             activebackground=COLOR_PRIMARY_BLUE_DARK, activeforeground=COLOR_WHITE,
+             relief=tk.RAISED, padx=button_padx, pady=button_pady, cursor="hand2"
+        )
+        self.color_button.pack(pady=10) # Add some padding below the button
+
+
+    # --- Update Charts after Data Processing ---
+    def update_charts(self):
+        """Clears previous charts and draws new ones based on processed data."""
+        # Clear previous charts from frames if they exist
+        for widget in self.revenue_frame.winfo_children(): widget.destroy()
+        for widget in self.customer_frame.winfo_children(): widget.destroy()
+        for widget in self.province_frame.winfo_children(): widget.destroy()
+        for widget in self.monthly_revenue_frame.winfo_children(): widget.destroy()
+
+
+        # Get sorted years and month-years
+        years = sorted(self.revenue_by_year.keys())
+        month_years = sorted(self.revenue_by_month_year.keys())
+
+
+        # Draw charts if data is available
+        if years:
+            # Data for yearly charts
+            yearly_revenue_data = [self.revenue_by_year.get(year, 0) for year in years]
+            yearly_customer_data = [self.customer_count_by_year.get(year, 0) for year in years]
+
+            self.create_revenue_chart(self.revenue_frame, years, yearly_revenue_data)
+            self.create_customer_chart(self.customer_frame, years, yearly_customer_data)
+            self.create_province_revenue_chart(self.province_frame, years, self.province_revenue_by_year)
+
+        if month_years:
+            # Data for monthly chart
+            monthly_revenue_values = [self.revenue_by_month_year.get(my, 0) for my in month_years]
+            self.create_monthly_revenue_chart(self.monthly_revenue_frame, month_years, monthly_revenue_values)
+
+        else:
+             # Display a message if no data
+             no_data_label = tk.Label(
+                  self.notebook, text="Không có dữ liệu doanh thu để hiển thị.",
+                  font=("Arial", 12), fg=COLOR_TEXT_MEDIUM, bg=COLOR_BACKGROUND_LIGHT
+             )
+             no_data_label.pack(pady=20, fill=tk.BOTH, expand=True)
+
+
+
+    # --- Chart Creation Methods ---
 
     def create_revenue_chart(self, parent, years, revenue_data):
-        fig, ax = plt.subplots(figsize=(8, 6), facecolor="#F5F5F5")
-        ax.bar(years, revenue_data, color="#708090")
-        ax.set_xlabel("Năm", fontsize=12, color="#333")
-        ax.set_ylabel("Tổng Doanh Thu", fontsize=12, color="#333")
-        ax.set_title("Tổng Doanh Thu qua các Năm", fontsize=14, color="#333")
-        ax.tick_params(axis='x', colors='#555')
-        ax.tick_params(axis='y', colors='#555')
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.set_facecolor("#F0F8FF")
-        fig.patch.set_facecolor("#F5F5F5")
+        """Creates and embeds the Total Revenue by Year bar chart."""
+        # Clear previous plot (if any) and create new figure/axes
+        plt.close('all') # Close all existing plot figures
+        fig, ax = plt.subplots(figsize=(8, 6), facecolor=COLOR_MAIN_PANEL_BG) # Use white background for figure patch
 
+        # Create the bar chart
+        bars = ax.bar(years, revenue_data, color=COLOR_PRIMARY_BLUE) # Use primary blue for bars
+
+        # Add revenue values on top of bars
+        for bar in bars:
+            yval = bar.get_height()
+            # Format value for display (optional, depends on scale)
+            display_value = format_currency(yval)
+            # Adjust vertical position of text
+            va = 'bottom' if yval > 0 else 'top'
+            ax.text(bar.get_x() + bar.get_width()/2, yval, display_value, va=va, ha='center', fontsize=8, color=COLOR_TEXT_DARK)
+
+
+        # Style the chart elements
+        ax.set_xlabel("Năm", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_ylabel("Tổng Doanh Thu", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_title("Tổng Doanh Thu qua các Năm", fontsize=14, color=COLOR_TEXT_DARK, pad=15) # Add padding below title
+        ax.tick_params(axis='x', colors=COLOR_TEXT_MEDIUM, labelsize=10) # Style x ticks
+        ax.tick_params(axis='y', colors=COLOR_TEXT_MEDIUM, labelsize=10) # Style y ticks
+        ax.spines['top'].set_visible(False) # Hide top spine
+        ax.spines['right'].set_visible(False) # Hide right spine
+        ax.set_facecolor(COLOR_MAIN_PANEL_BG) # Use white background for axes
+
+
+        # Embed the plot in the Tkinter parent frame
         canvas = FigureCanvasTkAgg(fig, master=parent)
         canvas_widget = canvas.get_tk_widget()
-        canvas_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10) # Add padding around the chart widget
         canvas.draw()
+
 
     def create_customer_chart(self, parent, years, customer_data):
-        fig, ax = plt.subplots(figsize=(8, 6), facecolor="#F5F5F5")
-        ax.plot(years, customer_data, marker='o', linestyle='-', color="#4682B4")
-        ax.set_xlabel("Năm", fontsize=12, color="#333")
-        ax.set_ylabel("Số lượng Khách hàng", fontsize=12, color="#333")
-        ax.set_title("Tăng trưởng Khách hàng qua các Năm", fontsize=14, color="#333")
-        ax.tick_params(axis='x', colors='#555')
-        ax.tick_params(axis='y', colors='#555')
+        """Creates and embeds the Customer Growth by Year line chart."""
+        plt.close('all') # Close existing figures
+        fig, ax = plt.subplots(figsize=(8, 6), facecolor=COLOR_MAIN_PANEL_BG) # Use white background
+
+        # Create the line chart
+        line, = ax.plot(years, customer_data, marker='o', linestyle='-', color=COLOR_ACCENT_GREEN) # Use accent green for line
+
+        # Add customer count values next to markers
+        for i, year in enumerate(years):
+            count = customer_data[i]
+            ax.text(year, count, str(count), ha='center', va='bottom', fontsize=8, color=COLOR_TEXT_DARK)
+
+
+        # Style the chart elements
+        ax.set_xlabel("Năm", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_ylabel("Số lượng Khách hàng", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_title("Tăng trưởng Khách hàng qua các Năm (Lượt Check-in)", fontsize=14, color=COLOR_TEXT_DARK, pad=15) # Add padding
+        ax.tick_params(axis='x', colors=COLOR_TEXT_MEDIUM, labelsize=10)
+        ax.tick_params(axis='y', colors=COLOR_TEXT_MEDIUM, labelsize=10)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.grid(True, linestyle='--', alpha=0.7)
-        ax.set_facecolor("#E0FFFF")
-        fig.patch.set_facecolor("#F5F5F5")
+        ax.grid(True, linestyle='--', alpha=0.7, color=COLOR_BORDER_GRAY) # Add grid
+        ax.set_facecolor(COLOR_MAIN_PANEL_BG) # Use white background
 
+
+        # Embed the plot
         canvas = FigureCanvasTkAgg(fig, master=parent)
         canvas_widget = canvas.get_tk_widget()
         canvas_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         canvas.draw()
+
 
     def create_province_revenue_chart(self, parent, years, province_revenue_data):
-        fig, ax = plt.subplots(figsize=(10, 7), facecolor="#F5F5F5")
-        num_provinces = len(set(p for year_data in province_revenue_data.values() for p in year_data.keys()))
-        bar_width = 0.8 / num_provinces
-        colors = plt.cm.get_cmap('viridis', num_provinces)
-        province_labels = []
-        province_positions = {}
-        color_map = {}
+        """Creates and embeds the Revenue by Province by Year grouped bar chart."""
+        plt.close('all') # Close existing figures
+        fig, ax = plt.subplots(figsize=(10, 7), facecolor=COLOR_MAIN_PANEL_BG) # Use white background
 
-        all_provinces = set()
-        for year_data in province_revenue_data.values():
-            all_provinces.update(year_data.keys())
-        sorted_provinces = sorted(list(all_provinces))
-        for i, province in enumerate(sorted_provinces):
-            province_positions[province] = i
-            color_map[province] = colors(i)
-            self.province_colors[province] = color_map[province] # Lưu màu
+        # Get all unique provinces and sort them
+        all_provinces = sorted(list(set(p for year_data in province_revenue_data.values() for p in year_data.keys())))
+        num_provinces = len(all_provinces)
 
+        if num_provinces == 0 or not years:
+             print("No province revenue data or years to plot.")
+             # Display a message inside the frame if no data
+             no_data_label = tk.Label(
+                  parent, text="Không có dữ liệu doanh thu theo tỉnh để hiển thị.",
+                  font=("Arial", 12), fg=COLOR_TEXT_MEDIUM, bg=COLOR_MAIN_PANEL_BG
+             )
+             no_data_label.pack(pady=20, fill=tk.BOTH, expand=True)
+             # Hide the color button if no data
+             if self.color_button:
+                  self.color_button.pack_forget()
+             plt.close(fig) # Close the empty figure
+             return
+
+
+        # Use a colormap to get colors for provinces
+        # We can choose a different colormap if 'viridis' doesn't fit the theme
+        # Example: 'tab10', 'viridis', 'plasma', 'Blues', 'Greens'
+        # Let's use 'tab10' for fewer distinct colors or 'viridis' for more
+        colors = plt.cm.get_cmap('tab10', max(num_provinces, 10)) # Use tab10, ensure at least 10 colors if num_provinces is small
+
+        # Assign a color and position index to each province
+        province_positions = {province: i for i, province in enumerate(all_provinces)}
+        color_map = {province: colors(i) for i, province in enumerate(all_provinces)}
+        self.province_colors = color_map # Store the map for the legend button
+
+
+        bar_width = 0.8 / max(num_provinces, 1) # Avoid division by zero if no provinces
+
+        # Plot bars for each province within each year
         for i, year in enumerate(years):
-            province_data = province_revenue_data.get(year, {})
-            for province, revenue in province_data.items():
+            province_data_this_year = province_revenue_data.get(year, {})
+            for province in all_provinces: # Iterate through all provinces for consistent bars
+                revenue = province_data_this_year.get(province, 0) # Get revenue for this province/year, default to 0
                 position = province_positions[province]
-                x_pos = i + (position - num_provinces // 2) * bar_width
-                ax.bar(x_pos, revenue, width=bar_width, label=province if year == years[0] else "", color=color_map[province])
+                # Calculate x position for the bar within the year's group
+                x_pos = i + (position - num_provinces / 2) * bar_width + bar_width / 2 # Center the group around the year tick
 
-        ax.set_xlabel("Năm", fontsize=12, color="#333")
-        ax.set_ylabel("Doanh Thu", fontsize=12, color="#333")
-        ax.set_title("Doanh thu theo Tỉnh qua các Năm", fontsize=14, color="#333")
+                # Plot the bar
+                # Add label only for the first year for the legend
+                label = province if year == years[0] else ""
+                ax.bar(x_pos, revenue, width=bar_width, label=label, color=color_map[province])
+
+                # Add revenue value on top of the bar if non-zero (optional)
+                if revenue > 0:
+                    ax.text(x_pos, revenue, format_currency(revenue), ha='center', va='bottom', fontsize=7, color=COLOR_TEXT_DARK, rotation=90) # Rotate text
+
+
+        # Style the chart elements
+        ax.set_xlabel("Năm", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_ylabel("Doanh Thu", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_title("Doanh thu theo Tỉnh qua các Năm", fontsize=14, color=COLOR_TEXT_DARK, pad=15) # Add padding
+
+        # Set x ticks to be at the center of the year groups
         ax.set_xticks(range(len(years)))
-        ax.set_xticklabels(years, fontsize=10, color="#555")
-        ax.tick_params(axis='y', colors='#555')
+        ax.set_xticklabels(years, fontsize=10, color=COLOR_TEXT_MEDIUM)
+        ax.tick_params(axis='y', colors=COLOR_TEXT_MEDIUM, labelsize=10)
+
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.legend(title="Tỉnh", fontsize=9)
-        ax.set_facecolor("#FAF0E6")
-        fig.patch.set_facecolor("#F5F5F5")
-        fig.tight_layout()
 
+        # Add legend
+        # Adjust legend position if it overlaps with the plot
+        ax.legend(title="Tỉnh", fontsize=9, loc='upper left', bbox_to_anchor=(1, 1))
+
+        ax.set_facecolor(COLOR_MAIN_PANEL_BG) # Use white background for axes
+        fig.patch.set_facecolor(COLOR_MAIN_PANEL_BG) # Use white background for figure patch
+        fig.tight_layout(rect=[0, 0, 0.85, 1]) # Adjust layout to make space for legend if on the side
+
+
+        # Embed the plot
         canvas = FigureCanvasTkAgg(fig, master=parent)
         canvas_widget = canvas.get_tk_widget()
         canvas_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         canvas.draw()
 
-    def show_province_colors(self):
-        top = Toplevel(self)
-        top.title("Màu sắc theo Tỉnh")
-        top.configure(bg="#F5F5F5")
 
+    def create_monthly_revenue_chart(self, parent, month_years, revenue_data):
+        """Creates and embeds the Revenue by Month/Year line chart."""
+        plt.close('all') # Close existing figures
+        fig, ax = plt.subplots(figsize=(12, 6), facecolor=COLOR_MAIN_PANEL_BG) # Use white background
+
+        # Create the line chart
+        line, = ax.plot(month_years, revenue_data, marker='o', linestyle='-', color=COLOR_ACCENT_TEAL) # Use accent teal
+
+        # Add revenue values next to markers (optional, can clutter for many points)
+        # for i, my in enumerate(month_years):
+        #     revenue = revenue_data[i]
+        #     ax.text(my, revenue, format_currency(revenue), ha='center', va='bottom', fontsize=7, color=COLOR_TEXT_DARK, rotation=45)
+
+
+        # Style the chart elements
+        ax.set_xlabel("Tháng/Năm", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_ylabel("Doanh Thu", fontsize=12, color=COLOR_TEXT_DARK)
+        ax.set_title("Doanh Thu theo Tháng/Năm", fontsize=14, color=COLOR_TEXT_DARK, pad=15) # Add padding
+
+        # Improve x-axis tick display for many months
+        ax.set_xticks(month_years) # Set ticks at each month/year
+        ax.set_xticklabels(month_years, rotation=45, ha='right', fontsize=9, color=COLOR_TEXT_MEDIUM) # Rotate and align labels
+
+        ax.tick_params(axis='y', colors=COLOR_TEXT_MEDIUM, labelsize=10)
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.grid(True, linestyle='--', alpha=0.7, color=COLOR_BORDER_GRAY) # Add grid
+        ax.set_facecolor(COLOR_MAIN_PANEL_BG) # Use white background
+
+
+        # Adjust layout to prevent labels overlapping
+        fig.tight_layout()
+
+        # Embed the plot
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas.draw()
+
+
+    # --- Show Province Color Legend ---
+    def show_province_colors(self):
+        """Opens a Toplevel window to display the color mapping for provinces."""
+        if not self.province_colors:
+            messagebox.showinfo("Thông tin", "Không có dữ liệu tỉnh/thành phố để hiển thị chú giải.")
+            return
+
+        top = Toplevel(self, bg=COLOR_BACKGROUND_LIGHT) # Consistent background for pop-up
+        top.title("Chú giải Màu sắc theo Tỉnh")
+        top.transient(self.winfo_toplevel()) # Keep on top of main window
+        top.grab_set() # Block interaction with parent windows
+
+        padding_frame = tk.Frame(top, bg=COLOR_BACKGROUND_LIGHT, padx=10, pady=10) # Padding inside pop-up
+        padding_frame.pack(fill="both", expand=True)
+
+        title_label = tk.Label(padding_frame, text="Màu sắc các Tỉnh/Thành phố:", font=("Arial", 12, "bold"), bg=COLOR_BACKGROUND_LIGHT, fg=COLOR_TEXT_DARK)
+        title_label.pack(pady=(0, 10))
+
+        # Display each province and its color
         for province, color_tuple in self.province_colors.items():
+            # Convert Matplotlib color tuple (RGB 0-1) to hex (#RRGGBB)
             color_hex = '#%02x%02x%02x' % (int(color_tuple[0]*255), int(color_tuple[1]*255), int(color_tuple[2]*255))
-            frame = ttk.Frame(top, padding=5)
-            frame.pack(fill=tk.X)
-            color_label = Label(frame, text="", bg=color_hex, width=5)
+
+            # Use a Frame for each row (color block + label)
+            frame = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT) # Row frame
+            frame.pack(fill=tk.X, pady=2) # Pack row frames
+
+            # Color block label
+            color_label = tk.Label(frame, text="", bg=color_hex, width=3, relief=tk.SOLID, bd=1) # Use tk.Label for more styling, add border
             color_label.pack(side=tk.LEFT, padx=5)
-            province_label = Label(frame, text=f"{province}: {color_hex}", bg="#F5F5F5")
-            province_label.pack(side=tk.LEFT)
+
+            # Province name label
+            province_label = tk.Label(frame, text=f"{province}", bg=COLOR_BACKGROUND_LIGHT, fg=COLOR_TEXT_DARK, font=("Arial", 10)) # Province name
+            province_label.pack(side=tk.LEFT, padx=2)
+
+            # Optional: Display the hex code next to the name
+            # hex_label = tk.Label(frame, text=f"({color_hex})", bg=COLOR_BACKGROUND_LIGHT, fg=COLOR_TEXT_MEDIUM, font=("Arial", 8))
+            # hex_label.pack(side=tk.LEFT)
+
+
+# --- Example Usage (Standalone Test) ---
+# This block allows you to run and test the RevenueChart frame by itself
+# if you have the mock CustomerInfo defined above or the actual customer_information file.
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Revenue Chart Test")
+    root.geometry("1000x700")
+    root.configure(bg=COLOR_BACKGROUND_LIGHT)
+
+
+    # --- Mock Data Setup ---
+    # Mock CustomerInfo class is defined above for standalone testing
+    # Create mock customer data as CustomerInfo objects
+    # Using checkin_date (YYYY-MM-DD string), room_type, and country attributes
+    mock_customer_data = [
+        # Data for 2020
+        CustomerInfo(id=1, name="A", country="Hồ Chí Minh", checkin_date="2020-01-10", room_type="VIP"), # Duration ~today-Jan2020
+        CustomerInfo(id=2, name="B", country="Hà Nội", checkin_date="2020-03-15", room_type="Thường"),
+        CustomerInfo(id=3, name="C", country="Hồ Chí Minh", checkin_date="2020-07-01", room_type="VIP"),
+        CustomerInfo(id=4, name="D", country="Đà Nẵng", checkin_date="2020-11-22", room_type="Thường"),
+        # Data for 2021
+        CustomerInfo(id=5, name="E", country="Hồ Chí Minh", checkin_date="2021-02-01", room_type="VIP"),
+        CustomerInfo(id=6, name="F", country="Hà Nội", checkin_date="2021-04-10", room_type="Thường"),
+        CustomerInfo(id=7, name="G", country="Đà Nẵng", checkin_date="2021-08-05", room_type="VIP"),
+        CustomerInfo(id=8, name="H", country="Hải Phòng", checkin_date="2021-12-01", room_type="Thường"),
+         # Data for 2022
+        CustomerInfo(id=9, name="I", country="Hồ Chí Minh", checkin_date="2022-01-20", room_type="VIP"),
+        CustomerInfo(id=10, name="J", country="Hà Nội", checkin_date="2022-03-30", room_type="Thường"),
+        CustomerInfo(id=11, name="K", country="Cần Thơ", checkin_date="2022-06-15", room_type="VIP"),
+        # Data for 2023
+        CustomerInfo(id=12, name="L", country="Hồ Chí Minh", checkin_date="2023-01-05", room_type="VIP"),
+        CustomerInfo(id=13, name="M", country="Hà Nội", checkin_date="2023-02-28", room_type="Thường"),
+        # Data for 2024
+        CustomerInfo(id=14, name="N", country="Hồ Chí Minh", checkin_date="2024-01-15", room_type="VIP"),
+        CustomerInfo(id=15, name="O", country="Đà Nẵng", checkin_date="2024-03-10", room_type="Thường"),
+        # Data for 2025 (assuming current date is in 2025 for calculation)
+        CustomerInfo(id=16, name="P", country="Hồ Chí Minh", checkin_date="2025-01-01", room_type="VIP"),
+        CustomerInfo(id=17, name="Q", country="Hà Nội", checkin_date="2025-02-14", room_type="Thường"),
+        CustomerInfo(id=18, name="R", country="Cần Thơ", checkin_date="2025-03-01", room_type="VIP"),
+    ]
+    # --- End Mock Data Setup ---
+
+
+    # Instantiate the RevenueChart frame, passing the mock data
+    revenue_chart_frame = RevenueChart(root, customer_list=mock_customer_data)
+    # Pack the frame to make it visible
+    revenue_chart_frame.pack(fill="both", expand=True)
+
+    # Start the Tkinter event loop
+    root.mainloop()

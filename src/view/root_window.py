@@ -69,7 +69,7 @@ class App(tk.Tk):
             "Doanh thu": Revenue(self),
             "Quản Lý Phòng": RoomManagement(self,self.customer_list),
             "Quản Lý Nhân  Viên": StaffManagement(self, self.staff_list, self.db_conn),
-            "Biểu Đồ Doanh Thu": RevenueChart(self)
+            "Biểu Đồ Doanh Thu": RevenueChart(self,self.customer_list)
         }
 
         # Create buttons to switch tabs
