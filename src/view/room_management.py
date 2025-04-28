@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 import platform
 
+from customer_information import CustomerInfo
+
 class RoomManagement(tk.Frame):
     def __init__(self, parent, customer_list):
         super().__init__(parent, bg="#F5F5F5")
@@ -30,15 +32,14 @@ class RoomManagement(tk.Frame):
         self.customer_list = customer_list
         # self.customer_list = [
         #     # Note the last element is now an integer
-        #     (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2005-08-16", "Thường", 301),
-        #     (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh", "2015-02-20", "VIP", 102),
-        #     (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh", "2010-02-10", "VIP", 103),
-        #     (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi", "2018-11-15", "Thường", 104),
-        #     (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu", "2020-01-01", "Thường", 105),
-        #     (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong", "2015-02-20", "VIP", 205),
-        #     (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Vĩnh Long", "2015-02-23", "Thường", 201) # Corrected address typo
+        #     CustomerInfo(1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2005-08-16", "Thường", 301),
+        #     CustomerInfo(2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh", "2015-02-20", "VIP", 102),
+        #     CustomerInfo(3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh", "2010-02-10", "VIP", 103),
+        #     CustomerInfo(4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi", "2018-11-15", "Thường", 104),
+        #     CustomerInfo(5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu", "2020-01-01", "Thường", 105),
+        #     CustomerInfo(6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong", "2015-02-20", "VIP", 205),
+        #     CustomerInfo(7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Vĩnh Long", "2015-02-23", "Thường", 201) # Corrected address typo
         # ]
-        # --- End Data ---
 
         self.title_label = tk.Label(self, text="Danh Sách Phòng Hiện Có", font=("Arial", 16, "bold"), bg="#F5F5F5", pady=10)
         self.title_label.pack(fill="x")

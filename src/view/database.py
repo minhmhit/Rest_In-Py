@@ -4,27 +4,8 @@ from datetime import datetime, date
 # Assume CustomerInfo and StaffInfo are correctly imported
 from customer_information import CustomerInfo
 from staff_information import StaffInfo
+from revenue import RevenueData
 # from staff_information import StaffInfo # Need your actual import
-
-# Mock StaffInfo for example if needed
-# try:
-# except ImportError:
-#     print("Warning: staff_information.py not found. Using mock StaffInfo.")
-#     class StaffInfo:
-#          def __init__(self, id=None, name=None, sex=None, birthday=None, role=None, username=None, password=None, permissions=None):
-#              self.id = id
-#              self.name = name
-#              self.sex = sex
-#              self.birthday = birthday
-#              self.role = role
-#              self.username = username
-#              self.password = password
-#              self.permissions = permissions
-#          def haveNone(self):
-#              return any(getattr(self, field) is None for field in ['id', 'name', 'username', 'password', 'role']) # Example fields
-#          def __str__(self):
-#              return f"StaffInfo(ID: {self.id}, Name: {self.name})"
-
 
 class DB_Connector:
     def __init__(self) -> None:
@@ -90,10 +71,29 @@ class DB_Connector:
         return customers
 
     def getRevenueFromDatabase(self):
-        revenue_list = []
-        # Implement revenue fetching logic
-        print("Placeholder for getRevenueFromDatabase")
-        return revenue_list
+        revenues = []
+        if not self.conn or not self.conn.is_connected():
+            print("DB Connection not available for getCustomers.")
+            return revenues
+            
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute("SELECT id, name, sex, birthday, national, country, checkin_date, room_type, room_number, total_price FROM revenues")
+            for row in cursor.fetchall():
+                row_list = list(row)
+                # Assuming birthday is index 3, checkin_date is index 6
+                if isinstance(row_list[3], (datetime, date)):
+                    row_list[3] = row_list[3].strftime('%Y-%m-%d')
+                if isinstance(row_list[6], (datetime, date)):
+                    row_list[6] = row_list[6].strftime('%Y-%m-%d')
+                # --- End NEW ---
+                revenue = RevenueData(*row_list) # Create CustomerInfo object with string dates
+                revenues.append(revenue)
+        except mysql.connector.Error as err:
+            print(f"Error fetching revenue data list: {err}")
+        finally:
+            cursor.close()
+        return revenues
 
     # ------ insert data to database ------
     def setCustomerToDatabase(self,customer_data: CustomerInfo):
@@ -108,11 +108,6 @@ class DB_Connector:
 
         cursor = self.conn.cursor()
         try:
-             # Dates are expected to be YYYY-MM-DD strings or None/empty strings in CustomerInfo
-             # mysql.connector handles None correctly for NULL columns
-             # No need for .strftime('%Y-%m-%d') here if CustomerInfo stores them as strings
-             # If CustomerInfo stores datetime objects, then .strftime is needed here
-             # Let's assume CustomerInfo stores YYYY-MM-DD strings or ""
              cursor.execute("""
                  INSERT INTO customers (id, name, sex, birthday, national, country, checkin_date, room_type, room_number)
                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -169,9 +164,39 @@ class DB_Connector:
         finally:
             cursor.close()
 
+    def setRevenueToDatabase(self,revenue_data: RevenueData):
+        if not self.conn or not self.conn.is_connected():
+            print("DB Connection not available for setRevenue.")
+            return
 
-    def setRevenueToDatabase(self):
-        pass # Implement revenue insertion
+        # check if customer_data is None or have None/empty critical fields
+        if revenue_data is None or revenue_data.haveNone(): # Using the haveNone check from CustomerInfo example
+             print("revenue_data is None or has incomplete critical fields")
+             return
+
+        cursor = self.conn.cursor()
+        try:
+             cursor.execute("""
+                 INSERT INTO revenues (id, name, sex, birthday, national, country, checkin_date, room_type, room_number, total_price)
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+             """, (
+                 revenue_data.id,
+                 revenue_data.name,
+                 revenue_data.sex,
+                 revenue_data.birthday if revenue_data.birthday else None, # Use None for empty string for DB
+                 revenue_data.national,
+                 revenue_data.country,
+                 revenue_data.checkin_date if revenue_data.checkin_date else None, # Use None for empty string for DB
+                 revenue_data.room_type,
+                 revenue_data.room_number,
+             ))
+             self.conn.commit()
+             print(f"Revenue {revenue_data.id} added to database.")
+        except mysql.connector.Error as err:
+            print(f"Error inserting customer: {err}")
+            self.conn.rollback() # Rollback in case of error
+        finally:
+             cursor.close()
 
     # ------ remove data from database ------
     def removeCustomerFromDatabase(self,customer_id: str): # Expect string ID
@@ -213,8 +238,25 @@ class DB_Connector:
         finally:
             cursor.close()
 
-    def removeRevenueFromDatabase(self):
-        pass # Implement revenue removal
+    def removeRevenueFromDatabase(self, revenue_id: str):
+        if not self.conn or not self.conn.is_connected():
+            print("DB Connection not available for removeRevenue.")
+            return
+            
+        cursor = self.conn.cursor()
+        try:
+             # Use parameterized query to prevent SQL injection
+             cursor.execute("""
+                 DELETE FROM revenues
+                 WHERE id = %s;
+             """, (revenue_id,)) # Pass customer_id as a tuple
+             self.conn.commit()
+             print(f"Customer {revenue_id} removed from database.")
+        except mysql.connector.Error as err:
+            print(f"Error removing customer {revenue_id}: {err}")
+            self.conn.rollback()
+        finally:
+            cursor.close()
 
     # ------ update data in database ------
     def updateCustomerInDatabase(self, customer_data: CustomerInfo):
@@ -299,10 +341,6 @@ class DB_Connector:
             self.conn.rollback()
         finally:
             cursor.close()
-
-
-    def updateRevenueInDatabase(self):
-        pass # Implement revenue update
 
     # ------ close sql connector buffer ------
     def closeBuffer(self):

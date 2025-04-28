@@ -7,32 +7,6 @@ from customer_information import CustomerInfo
 from tkcalendar import Calendar
 from database import DB_Connector
 
-# Mock DB_Connector for testing if needed (copy from above)
-# try:
-# except ImportError:
-#     print("Warning: database.py not found. Using mock DB_Connector.")
-#     import mysql.connector # Need this import for the mock
-#     class DB_Connector:
-#         def __init__(self):
-#             print("Mock DB_Connector initialized. No real connection.")
-#             self.conn = None # Simulate no connection
-#
-#         def getCustomersFromDatabase(self):
-#             print("Mock DB: getCustomersFromDatabase")
-#             # Return mock data as CustomerInfo objects with YYYY-MM-DD strings
-#             return [
-#                  CustomerInfo("101", "Nguyen Van A", "Nam", "2000-01-15", "Viet Nam", "Ha Noi", "2024-04-20", "VIP", "301"),
-#                  CustomerInfo("102", "Tran Thi B", "Nu", "1995-05-20", "Viet Nam", "HCM City", "2024-04-22", "Normal", "205"),
-#                  CustomerInfo("103", "Le Van C", "Nam", "1998-11-11", "USA", "New York", "2024-04-25", "Normal", "201")
-#             ]
-#         # Add other mock methods (set, update, remove) that print actions
-#         def setCustomerToDatabase(self, customer): print(f"Mock DB: Adding customer {customer.id}"); return True
-#         def updateCustomerInDatabase(self, customer): print(f"Mock DB: Updating customer {customer.id}"); return True
-#         def removeCustomerFromDatabase(self, customer_id): print(f"Mock DB: Removing customer {customer_id}"); return True
-#         def closeBuffer(self): print("Mock DB: closeBuffer")
-#         def is_connected(self): return False # Simulate not connected
-
-
 # --- Define colors --- (Keep consistent with Checkout)
 COLOR_PRIMARY_BLUE = "#3B82F6"
 COLOR_ACCENT_GREEN = "#28a745"

@@ -15,7 +15,7 @@ from database import DB_Connector
 import cv2  # Import cv2 at the top level
 
 class App(tk.Tk):
-    def __init__(self, customer_list, staff_list):
+    def __init__(self, customer_list, staff_list, revenue_list):
         super().__init__()
         self.is_fullscreen = False
         self.title("Quản Lí Nhà Trọ")
@@ -25,6 +25,7 @@ class App(tk.Tk):
 
         self.customer_list = customer_list
         self.staff_list = staff_list
+        self.revenue_list = revenue_list
         self.db_conn = DB_Connector()  # Initialize the database connector here
 
         # App bar
@@ -66,7 +67,7 @@ class App(tk.Tk):
             "Camera": self.camera_tab,
             "Thanh Toán": Checkout(self, self.customer_information),
             "Danh Sách Thuê": Customer(self, self.show_tab, self.customer_information, self.customer_list, self.db_conn),
-            "Doanh thu": Revenue(self),
+            "Doanh thu": Revenue(self,self.revenue_list,self.db_conn),
             "Quản Lý Phòng": RoomManagement(self,self.customer_list),
             "Quản Lý Nhân  Viên": StaffManagement(self, self.staff_list, self.db_conn),
             "Biểu Đồ Doanh Thu": RevenueChart(self,self.customer_list)
@@ -119,8 +120,9 @@ def main():
         db_conn = DB_Connector()
         customer_list = db_conn.getCustomersFromDatabase()
         staff_list = db_conn.getStaffsFromDatabase()
+        revenue_list = db_conn.getRevenueFromDatabase()
 
-        app = App(customer_list, staff_list)
+        app = App(customer_list, staff_list, revenue_list)
         app.mainloop()
 
         # close Database

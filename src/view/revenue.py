@@ -1,83 +1,218 @@
 import tkinter as tk
 from tkinter import ttk
+import locale
+from datetime import datetime
+
+from database import DB_Connector
+
+class RevenueData:
+    def __init__(self, id, name, sex, birthday, nationality, country, checkin_date, room_type, room_number, total_price):
+        self.id = id
+        self.name = name
+        self.sex = sex
+        self.birthday = birthday
+        self.nationality = nationality
+        self.country = country
+        self.checkin_date = checkin_date
+        self.room_type = room_type
+        self.room_number = room_number
+        self.total_price = total_price # Added total price
+
+    def __repr__(self):
+        return f"RevenueData(id={self.id}, name='{self.name}', price={self.total_price}, ...)"
+
+
+# --- Vietnamese Locale and Currency Formatting ---
+def format_currency_fallback(amount):
+    """Fallback formatting if locale setting fails (Vietnamese style)."""
+    # Formats number with commas as thousands separators and no decimal places, adds " VND"
+    # Then replaces comma with dot for Vietnamese style
+    return f"{amount:,.0f}".replace(",", ".") + " VND"
+
+# Try setting locale for proper currency formatting
+try:
+    # Common locale names for Vietnamese
+    locale.setlocale(locale.LC_ALL, 'vi_VN.UTF-8')
+    # Define the function using locale.currency
+    def format_currency(amount):
+        # locale.currency might add a space or have different symbol placement,
+        # adjust if needed or stick to manual formatting for consistency.
+        # Using manual formatting for consistent "X.XXX.XXX VND" style
+        return f"{amount:,.0f}".replace(",", ".") + " VND"
+
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Vietnamese_Vietnam.1258')
+         # Define the function using locale.currency or manual
+        def format_currency(amount):
+             return f"{amount:,.0f}".replace(",", ".") + " VND"
+            # Alternative using locale (might look different):
+            # return locale.currency(amount, grouping=True, symbol=" VND")
+
+    except locale.Error:
+        print("Warning: Could not set Vietnamese locale for currency formatting. Using fallback.")
+        # If both fail, use the manual fallback function
+        format_currency = format_currency_fallback
+
+# Ensure format_currency is defined even if all locale setting fails
+if 'format_currency' not in locals():
+    format_currency = format_currency_fallback
+
+# --- End Vietnamese Locale and Currency Formatting ---
+
 
 class Revenue(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, revenue_list, db_conn: DB_Connector):
         super().__init__(parent, bg="#F5F5F5")
 
-        # id - name - sex - birthday - national - country - checkin_date - room_type - room total price - room number
-        self.customer_list = [
-            (1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2008-12-05", "VIP", 150.00 ,103),
-            (2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Trà Vinh", "2011-05-03", "Thường", 80.00,101),
-            (3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Hồ Chí Minh", "2011-09-16", "VIP", 150.00,204),
-            (4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Hà Nội", "2009-12-31", "Thường", 80.00,202),
-            (5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bạc Liêu", "2013-10-16", "Thường", 80.00,301),
-            (6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hải Phòng", "2017-02-10", "Thường", 80.00,305),
-            (7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Việt Nam", "2018-01-30", "VIP", 150.00,901),
-            (8, "Vũ Ngọc Linh", "Nữ", "1991-06-25", "Việt Nam", "Việt Nam", "2000-04-22", "Thường", 80.00,902),
-            (9, "Đoàn Văn Hải", "Nam", "1984-03-17", "Việt Nam", "Việt Nam", "2018-10-04", "Thường", 80.00,604),
-            (10, "Lý Thu Trang", "Nữ", "1993-09-29", "Việt Nam", "Việt Nam", "2018-12-19", "Thường", 80.00,502),
-            (11, "Nguyễn Văn Bình", "Nam", "1982-07-21", "Việt Nam", "Đà Nẵng", "2020-05-28", "VIP", 150.00,405),
-            (12, "Phạm Thanh Mai", "Nữ", "1994-03-12", "Việt Nam", "Cần Thơ", "2020-06-17", "Thường", 80.00,204),
-            # (13, "Trần Đình Nam", "Nam", "1990-10-01", "Việt Nam", "Nghệ An", "2020-06-24", "VIP", 150.00),
-            # (14, "Hoàng Thu Hà", "Nữ", "1997-08-15", "Việt Nam", "Quảng Ninh", "2021-11-12", "Thường", 80.00),
-            # (15, "Lê Hoàng Sơn", "Nam", "1995-11-09", "Việt Nam", "Bình Dương", "2022-02-08", "VIP", 150.00),
-            # (16, "Đặng Ngọc Phúc", "Nam", "1988-12-30", "Việt Nam", "Huế", "2023-02-08", "Thường", 80.00),
-            # (17, "Ngô Minh Tuấn", "Nam", "1999-05-07", "Việt Nam", "Hà Nam", "2023-09-27", "Thường", 80.00),
-            # (18, "Lý Ngọc Hân", "Nữ", "1991-01-14", "Việt Nam", "Phú Thọ", "2024-01-03", "VIP", 150.00),
-            # (19, "Phan Thị Lan", "Nữ", "1986-06-17", "Việt Nam", "Bình Thuận", "2024-01-05", "Thường", 80.00),
-            # (20, "Nguyễn Đăng Khoa", "Nam", "1994-09-23", "Việt Nam", "Vũng Tàu", "2025-04-08", "VIP", 150.00),
-            # (21, "Võ Hồng Quân", "Nam", "1987-04-08", "Việt Nam", "Tây Ninh", "2014-09-15", "VIP", 150.00),
-            # (22, "Dương Thị Nhung", "Nữ", "1995-05-19", "Việt Nam", "Gia Lai", "2023-03-30", "Thường", 80.00),
-            # (23, "Lê Văn Huy", "Nam", "1983-02-14", "Việt Nam", "Hà Giang", "2012-09-09", "VIP", 150.00),
-            # (24, "Nguyễn Thị Thanh", "Nữ", "1998-10-27", "Việt Nam", "Đắk Lắk", "2020-02-20", "Thường", 80.00),
-            # (25, "Trần Hữu Phước", "Nam", "1990-08-09", "Việt Nam", "Cà Mau", "2013-03-12", "VIP", 150.00),
-            # (26, "Đào Thị Phượng", "Nữ", "1996-02-22", "Việt Nam", "Bắc Giang", "2016-02-20", "Thường", 80.00),
-            # (27, "Nguyễn Nhật Linh", "Nam", "1989-07-05", "Việt Nam", "Thanh Hóa", "2017-09-12", "VIP", 150.00),
-            # (28, "Trương Ngọc Anh", "Nữ", "1992-12-31", "Việt Nam", "Bình Phước", "2021-11-12", "Thường", 80.00),
-            # (29, "Lâm Hoàng Dũng", "Nam", "1997-11-17", "Việt Nam", "Sóc Trăng", "2022-12-21", "VIP", 150.00),
-            # (30, "Võ Thị Hạnh", "Nữ", "1993-06-09", "Việt Nam", "An Giang", "1975-04-30", "Thường", 80.00),
-        ]
-        
-        # LabelFrame for the Table
-        table_frame = tk.LabelFrame(self, text="Motel Revenue", bg="#F5F5F5", font=("Arial", 12, "bold"))
+        self.revenue_list = revenue_list
+        # if revenue_list is None:
+        #     self.revenue_list = [
+        #         RevenueData(1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2005-08-16", "Thường", 301, 500000),
+        #         RevenueData(2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh", "2015-02-20", "VIP", 102, 400000),
+        #         RevenueData(3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh", "2010-02-10", "VIP", 103, 482945),
+        #         RevenueData(4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi", "2018-11-15", "Thường", 104, 109842),
+        #         RevenueData(5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu", "2020-01-01", "Thường", 105, 98247),
+        #         RevenueData(6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong", "2015-02-20", "VIP", 205, 100004),
+        #         RevenueData(7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Vĩnh Long", "2015-02-23", "Thường", 201, 738883)
+        #     ]
+        # else:
+        #      self.customer_list = [c for c in customer_list if isinstance(c, RevenueData)]
+
+
+        # LabelFrame for the Table - Translated
+        table_frame = tk.LabelFrame(self, text="Doanh Thu Nhà Nghỉ", bg="#F5F5F5", font=("Arial", 12, "bold"))
         table_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Columns Definition
-        columns = ("ID", "Name", "Sex", "Birthday", "Nationality", "Country", "Check-in Date", "Room Type", "Total Cost")
+        # Columns Definition - Translated
+        column_identifiers = ("Mã", "Tên", "Giới tính", "Ngày sinh", "Quốc tịch", "Quê quán", "Ngày nhận phòng", "Loại phòng", "Số phòng", "Tổng tiền")
 
         # Treeview Widget
-        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
-        for col in columns:
-            self.tree.heading(col, text=col)
-            self.tree.column(col, anchor="center", width=100)
-        
-        self.tree.pack(padx=10, pady=5, fill="both", expand=True)
+        self.tree = ttk.Treeview(table_frame, columns=column_identifiers, show="headings")
 
-        # insert data
-        for customer in self.customer_list:
-            self.tree.insert("", "end", values=customer)
+        # Configure columns - Use translated identifiers
+        for col_id in column_identifiers:
+            self.tree.heading(col_id, text=col_id)
+            self.tree.column(col_id, anchor="center", width=100) # Default width
 
-        # LabelFrame for Total Revenue
-        revenue_frame = tk.LabelFrame(self, text="Total Revenue", bg="#F5F5F5", font=("Arial", 12, "bold"))
+        # Adjust width and alignment for the price column
+        self.tree.column("Tổng tiền", anchor="e", width=100) # 'e' for east (right) alignment
+
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        self.tree.pack(side="left", padx=10, pady=5, fill="both", expand=True)
+
+        # insert initial data
+        self.load_customer_data()
+
+        # LabelFrame for Total Revenue - Translated
+        revenue_frame = tk.LabelFrame(self, text="Tổng Doanh Thu", bg="#F5F5F5", font=("Arial", 12, "bold"))
         revenue_frame.pack(padx=10, pady=10, fill="x")
 
-        self.total_revenue_label = tk.Label(revenue_frame, text="Total Revenue: $0.00", font=("Arial", 12, "bold"), bg="#F5F5F5")
+        # Total Revenue Label - Translated
+        self.total_revenue_label = tk.Label(revenue_frame, text="Tổng Doanh Thu: " + format_currency(0), font=("Arial", 12, "bold"), bg="#F5F5F5")
         self.total_revenue_label.pack(padx=10, pady=5)
 
         # update total revenue
         self.update_total_revenue()
 
+    def load_customer_data(self):
+        """Clears the treeview and loads data from self.customer_list."""
+        # Clear existing items
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        # Insert data from the list
+        for revenue in self.revenue_list:
+            # Extract attributes into a tuple for the Treeview
+            # Make sure the order matches column_identifiers
+            revenue_values = (
+                revenue.id,
+                revenue.name,
+                revenue.sex,
+                revenue.birthday,
+                revenue.nationality,
+                revenue.country,
+                revenue.checkin_date,
+                revenue.room_type,
+                revenue.room_number,
+                revenue.total_price # Include the total price
+            )
+            # The treeview uses the column identifiers defined during setup,
+            # the order of values in the tuple must match the order of identifiers.
+            self.tree.insert("", "end", values=revenue_values)
+
     def update_total_revenue(self):
-        total = sum(float(self.tree.item(item, "values")[-1]) for item in self.tree.get_children())
-        self.total_revenue_label.config(text=f"Total Revenue: ${total:.2f}")
+        """Calculates and updates the total revenue displayed."""
+        total = 0.0
+        # Get the column index for "Tổng tiền" dynamically
+        # This is safer than hardcoding index 9
+        try:
+            price_col_index = list(self.tree["columns"]).index("Tổng tiền")
+        except ValueError:
+             print("Error: 'Tổng tiền' column not found in treeview columns.")
+             self.total_revenue_label.config(text="Error calculating revenue.")
+             return
+
+        # Iterate through all items in the treeview
+        for item_id in self.tree.get_children():
+            # Get the values for the current item
+            values = self.tree.item(item_id, "values")
+
+            # Check if the values tuple is long enough
+            if len(values) > price_col_index:
+                try:
+                    # Convert the price to float and add to total
+                    price = float(values[price_col_index])
+                    total += price
+                except ValueError:
+                    # Handle cases where the price isn't a number in that column
+                    print(f"Warning: Could not convert price to float for item values: {values}")
+                    pass # Skip this row
+            else:
+                 print(f"Warning: Item values too short, missing price column: {values}")
+
+
+        # Format the total revenue using the configured format_currency function
+        formatted_total = format_currency(total)
+
+        # Update the label
+        self.total_revenue_label.config(text=f"Tổng Doanh Thu: {formatted_total}")
+
 
     def add_record(self, customer):
-        self.tree.insert("", "end", values=customer)
+        """Adds a new customer record to the treeview and the internal list."""
+        # Ensure the input is a RevenueData object
+        if not isinstance(customer, RevenueData):
+            print("Lỗi: add_record yêu cầu đối tượng RevenueData.")
+            return
 
-        # move new customer to the top of table
-        last_insert_customer = self.tree.insert("", "end", values=customer)
-        self.tree.move(last_insert_customer, "", 0)
+        # Extract attributes into a tuple for the Treeview
+        # Make sure the order matches column_identifiers defined in __init__
+        customer_values = (
+            customer.id,
+            customer.name,
+            customer.sex,
+            customer.birthday,
+            customer.nationality,
+            customer.country,
+            customer.checkin_date,
+            customer.room_type,
+            customer.room_number,
+            customer.total_price # Include the total price
+        )
 
-        # update total revenue
+        # Insert the record and get its item ID
+        # The values are matched to columns based on the order defined when creating the treeview
+        item_id = self.tree.insert("", "end", values=customer_values)
+
+        # Move the new record to the top (index 0) if desired
+        # self.tree.move(item_id, "", 0) # Keep or remove
+
+        # Add the customer object to the internal list
+        self.revenue_list.append(customer)
+
+        # Update total revenue
         self.update_total_revenue()
