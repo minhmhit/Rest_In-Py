@@ -6,7 +6,7 @@ import os
 CURRENT_DIR = os.path.dirname(__file__) # Directory of this file (src/view/)
 
 # Path to the AI directory relative to the current directory
-AI_DIR_RELATIVE = os.path.join(CURRENT_DIR, '..', 'AI')
+AI_DIR_RELATIVE = os.path.join(CURRENT_DIR, '..', 'view')
 
 # Construct paths to resource files inside the AI directory
 DATASET_PATH = os.path.join(AI_DIR_RELATIVE, "dataset")

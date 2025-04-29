@@ -20,7 +20,7 @@ from view.recognize_faces import load_model, build_label_map, preprocess_face_fr
 # To get from src/view/camera.py to src/AI/haarcascade_frontalface_default.xml:
 # Go up one level ('..') to src/, then down into 'AI', then specify the filename
 CAMERA_DIR = os.path.dirname(__file__) # Directory of this file (src/view/)
-HAARCASCADE_CAMERA_PATH = os.path.join(CAMERA_DIR, '..', 'AI', 'haarcascade_frontalface_default.xml')
+HAARCASCADE_CAMERA_PATH = os.path.join(CAMERA_DIR, '..', 'view', 'haarcascade_frontalface_default.xml')
 
 # Define the threshold for recognition distance
 RECOGNITION_THRESHOLD = 1500
@@ -32,6 +32,7 @@ BG_COLOR = "#F5F5F5"
 class Camera(tk.Frame):
 
     def __init__(self, parent):
+        self.notifications = []
         super().__init__(parent, bg=BG_COLOR)
 
         # --- Recognition Components ---
@@ -165,7 +166,7 @@ class Camera(tk.Frame):
         self.last_logged_times = {} # {name: timestamp} to track last log time for each person
         # Ensure timelog.txt path is correct relative to where main.py is run
         # If timelog.txt is in the project root (where you run python src/main.py)
-        self.timelog_file_path = "timelog.txt"
+        self.timelog_file_path = "view/timelog.txt"
 
 
         # --- Start Update Loop ---
@@ -258,14 +259,13 @@ class Camera(tk.Frame):
                            # 4. Draw the results on the original color frame
                            # Use the imported draw function
                            draw_prediction_on_frame(frame, name, distance, x, y, w, h, threshold=RECOGNITION_THRESHOLD) # Pass threshold to drawing function
-
+                           self.log_recognition(name) # Log the name if recognized
              # Log recognition results after processing all faces in the frame
              # This might log multiple times per person if they appear in multiple frames
              # Consider logging only once per person per time interval in log_recognition
              # (The current log_recognition already handles the time interval)
              # No need to call log_recognition here inside the face loop, it's called within update_frame
-             # if name != "Unknown" and name != "Error":
-             #     self.log_recognition(name) # Log the name if recognized
+
 
 
         # --- End Recognition ---
