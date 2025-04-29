@@ -76,7 +76,7 @@ class DB_Connector:
             
         cursor = self.conn.cursor()
         try:
-            cursor.execute("SELECT id, name, sex, birthday, national, country, checkin_date, room_type, room_number, total_price FROM revenues")
+            cursor.execute("SELECT id, name, sex, birthday, national, country, checkin_date, checkout_date, room_type, room_number, total_price FROM revenues")
             for row in cursor.fetchall():
                 row_list = list(row)
                 # Assuming birthday is index 3, checkin_date is index 6
