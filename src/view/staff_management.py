@@ -5,8 +5,8 @@ from tkinter import messagebox
 from tkcalendar import Calendar
 
 # Assume DB_Connector and StaffInfo are imported
-from database import DB_Connector
-from staff_information import StaffInfo
+from view.db.database import DB_Connector
+from view.models import StaffInfo
 
 # --- Define colors --- (Keep consistent with other files)
 COLOR_PRIMARY_BLUE = "#3B82F6"

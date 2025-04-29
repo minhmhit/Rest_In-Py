@@ -1,11 +1,9 @@
 import mysql.connector
 from datetime import datetime, date
 
-# Assume CustomerInfo and StaffInfo are correctly imported
-from customer_information import CustomerInfo
-from staff_information import StaffInfo
-from revenue import RevenueData
-# from staff_information import StaffInfo # Need your actual import
+from view.models import RevenueData
+from view.models import StaffInfo
+from view.models import CustomerInfo
 
 class DB_Connector:
     def __init__(self) -> None:

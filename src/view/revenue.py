@@ -3,24 +3,8 @@ from tkinter import ttk
 import locale
 from datetime import datetime
 
-from database import DB_Connector
-
-class RevenueData:
-    def __init__(self, id, name, sex, birthday, nationality, country, checkin_date, room_type, room_number, total_price):
-        self.id = id
-        self.name = name
-        self.sex = sex
-        self.birthday = birthday
-        self.nationality = nationality
-        self.country = country
-        self.checkin_date = checkin_date
-        self.room_type = room_type
-        self.room_number = room_number
-        self.total_price = total_price # Added total price
-
-    def __repr__(self):
-        return f"RevenueData(id={self.id}, name='{self.name}', price={self.total_price}, ...)"
-
+from view.db.database import DB_Connector
+from view.models import RevenueData
 
 # --- Vietnamese Locale and Currency Formatting ---
 def format_currency_fallback(amount):
@@ -108,7 +92,7 @@ class Revenue(tk.Frame):
         self.load_customer_data()
 
         # LabelFrame for Total Revenue - Translated
-        revenue_frame = tk.LabelFrame(self, text="Tổng Doanh Thu", bg="#F5F5F5", font=("Arial", 12, "bold"))
+        revenue_frame = tk.LabelFrame(self, text="Tổng Doanh Thu 30 Ngày Gần Nhất", bg="#F5F5F5", font=("Arial", 12, "bold"))
         revenue_frame.pack(padx=10, pady=10, fill="x")
 
         # Total Revenue Label - Translated
@@ -133,7 +117,7 @@ class Revenue(tk.Frame):
                 revenue.name,
                 revenue.sex,
                 revenue.birthday,
-                revenue.nationality,
+                revenue.national,
                 revenue.country,
                 revenue.checkin_date,
                 revenue.room_type,
@@ -182,21 +166,13 @@ class Revenue(tk.Frame):
         self.total_revenue_label.config(text=f"Tổng Doanh Thu: {formatted_total}")
 
 
-    def add_record(self, customer):
-        """Adds a new customer record to the treeview and the internal list."""
-        # Ensure the input is a RevenueData object
-        if not isinstance(customer, RevenueData):
-            print("Lỗi: add_record yêu cầu đối tượng RevenueData.")
-            return
-
-        # Extract attributes into a tuple for the Treeview
-        # Make sure the order matches column_identifiers defined in __init__
+    def add_record(self, customer: RevenueData):
         customer_values = (
             customer.id,
             customer.name,
             customer.sex,
             customer.birthday,
-            customer.nationality,
+            customer.national,
             customer.country,
             customer.checkin_date,
             customer.room_type,

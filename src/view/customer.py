@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime, date # Import date
 # Assume CustomerInfo and DB_Connector are correctly imported
-from customer_information import CustomerInfo
+from view.models import CustomerInfo
 # from database import DB_Connector
 from tkcalendar import Calendar
-from database import DB_Connector
+from view.db.database import DB_Connector
 
 # --- Define colors --- (Keep consistent with Checkout)
 COLOR_PRIMARY_BLUE = "#3B82F6"

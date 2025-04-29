@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import platform
 
-from customer_information import CustomerInfo
+from view.models import CustomerInfo
 
 class RoomManagement(tk.Frame):
     def __init__(self, parent, customer_list):

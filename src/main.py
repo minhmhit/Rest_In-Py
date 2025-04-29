@@ -1,6 +1,8 @@
-from view.database import DB_Connector
+from view.db.database import DB_Connector
 from tkinter import messagebox
 import mysql.connector
+
+from view.root_window import App
 
 def main():
     try:

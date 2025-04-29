@@ -3,7 +3,7 @@ from tkinter import LabelFrame, messagebox
 from tkinter import font, ttk # Import ttk
 from datetime import datetime # Often needed even in login for consistency or logging
 
-from staff_information import StaffInfo
+from view.models import StaffInfo
 
 # --- Define colors --- (Keep consistent with other files)
 COLOR_PRIMARY_BLUE = "#3B82F6"

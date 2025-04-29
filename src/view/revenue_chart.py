@@ -6,7 +6,7 @@ from datetime import datetime, date # Import date as well
 import locale
 import calendar # Import calendar module for month names
 
-from customer_information import CustomerInfo # Assuming this exists and has attributes
+from view.models import CustomerInfo # Assuming this exists and has attributes
 
 # --- Define colors --- (Keep consistent with other files)
 COLOR_PRIMARY_BLUE = "#3B82F6"      # Màu xanh dương chính
@@ -173,11 +173,6 @@ class RevenueChart(tk.Frame):
                     self.revenue_by_month_year[month_year] += revenue
 
         print("Revenue data processed successfully.")
-        print(f"Revenue by Year: {self.revenue_by_year}")
-        print(f"Revenue by Month/Year: {self.revenue_by_month_year}")
-        print(f"Customer Count by Year: {self.customer_count_by_year}")
-        print(f"Province Revenue by Year: {self.province_revenue_by_year}")
-
 
     # --- Create Widgets (Notebook, Tab Frames) ---
     def create_widgets(self):

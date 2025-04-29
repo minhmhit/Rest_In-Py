@@ -2,16 +2,16 @@ import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
 
-from camera import Camera
-from checkout import Checkout
-from customer import Customer
-from login_page import LoginPage
-from revenue import Revenue
-from customer_information import CustomerInfo
-from room_management import RoomManagement
-from staff_management import StaffManagement
-from revenue_chart import RevenueChart
-from database import DB_Connector
+from view.camera import Camera
+from view.checkout import Checkout
+from view.customer import Customer
+from view.login_page import LoginPage
+from view.revenue import Revenue
+from view.models import CustomerInfo
+from view.room_management import RoomManagement
+from view.staff_management import StaffManagement
+from view.revenue_chart import RevenueChart
+from view.db.database import DB_Connector
 import cv2  # Import cv2 at the top level
 
 class App(tk.Tk):

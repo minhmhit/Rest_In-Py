@@ -5,7 +5,7 @@ from tkinter import filedialog
 import locale
 
 # Assume CustomerInfo is imported
-from customer_information import CustomerInfo
+from view.models import CustomerInfo
 
 # Import python-docx
 from docx import Document
