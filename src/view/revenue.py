@@ -1,42 +1,38 @@
 import tkinter as tk
 from tkinter import ttk
 import locale
-from datetime import datetime
+from datetime import datetime, timedelta
+import random # Import random for sample data
 
-from view.db.database import DB_Connector
+# Assume view.models contains RevenueData
+# Make sure your RevenueData class has attributes corresponding to the columns
+# and ideally a get_values_for_treeview method as suggested in the Checkout comments.
 from view.models import RevenueData
+
+# Assuming view.db.database contains DB_Connector (if needed for direct DB interaction in this tab)
+# from view.db.database import DB_Connector # Uncomment if you need DB interaction here
 
 # --- Vietnamese Locale and Currency Formatting ---
 def format_currency_fallback(amount):
     """Fallback formatting if locale setting fails (Vietnamese style)."""
-    # Formats number with commas as thousands separators and no decimal places, adds " VND"
-    # Then replaces comma with dot for Vietnamese style
     return f"{amount:,.0f}".replace(",", ".") + " VND"
 
-# Try setting locale for proper currency formatting
 try:
-    # Common locale names for Vietnamese
+    # Try setting Vietnamese locale
     locale.setlocale(locale.LC_ALL, 'vi_VN.UTF-8')
-    # Define the function using locale.currency
     def format_currency(amount):
-        # locale.currency might add a space or have different symbol placement,
-        # adjust if needed or stick to manual formatting for consistency.
-        # Using manual formatting for consistent "X.XXX.XXX VND" style
+        # Format as X.XXX.XXX VND
         return f"{amount:,.0f}".replace(",", ".") + " VND"
-
 except locale.Error:
     try:
+        # Try alternative Vietnamese locale
         locale.setlocale(locale.LC_ALL, 'Vietnamese_Vietnam.1258')
-         # Define the function using locale.currency or manual
         def format_currency(amount):
+             # Format as X.XXX.XXX VND
              return f"{amount:,.0f}".replace(",", ".") + " VND"
-            # Alternative using locale (might look different):
-            # return locale.currency(amount, grouping=True, symbol=" VND")
-
     except locale.Error:
         print("Warning: Could not set Vietnamese locale for currency formatting. Using fallback.")
-        # If both fail, use the manual fallback function
-        format_currency = format_currency_fallback
+        format_currency = format_currency_fallback # Use the fallback function
 
 # Ensure format_currency is defined even if all locale setting fails
 if 'format_currency' not in locals():
@@ -46,41 +42,47 @@ if 'format_currency' not in locals():
 
 
 class Revenue(tk.Frame):
-    def __init__(self, parent, revenue_list, db_conn: DB_Connector):
+    # Accept the list of RevenueData objects and the DB connector in __init__
+    # The single RevenueData object is NOT passed here; it's passed via the App's callback.
+    def __init__(self, parent, revenue_list=None, db_conn=None):
         super().__init__(parent, bg="#F5F5F5")
 
-        self.revenue_list = revenue_list
-        # if revenue_list is None:
-        #     self.revenue_list = [
-        #         RevenueData(1, "Nguyễn Văn An", "Nam", "1990-05-20", "Việt Nam", "Long An", "2005-08-16", "Thường", 301, 500000),
-        #         RevenueData(2, "Trần Thị Hoa", "Nữ", "1985-12-15", "Việt Nam", "Tra Vinh", "2015-02-20", "VIP", 102, 400000),
-        #         RevenueData(3, "Lê Minh Tú", "Nam", "1992-07-30", "Việt Nam", "Ho Chi Minh", "2010-02-10", "VIP", 103, 482945),
-        #         RevenueData(4, "Phạm Thùy Dung", "Nữ", "1998-09-05", "Việt Nam", "Ha Noi", "2018-11-15", "Thường", 104, 109842),
-        #         RevenueData(5, "Hoàng Quốc Bảo", "Nam", "1987-11-22", "Việt Nam", "Bac Lieu", "2020-01-01", "Thường", 105, 98247),
-        #         RevenueData(6, "Đặng Thu Hằng", "Nữ", "1995-04-18", "Việt Nam", "Hai Phong", "2015-02-20", "VIP", 205, 100004),
-        #         RevenueData(7, "Bùi Quang Huy", "Nam", "1989-08-12", "Việt Nam", "Vĩnh Long", "2015-02-23", "Thường", 201, 738883)
-        #     ]
-        # else:
-        #      self.customer_list = [c for c in customer_list if isinstance(c, RevenueData)]
+        # Store the provided list of RevenueData objects.
+        # This list is managed by the App and passed down.
+        self.revenue_list = revenue_list if revenue_list is not None else []
+        self.db_conn = db_conn # Store the database connector (optional, depending on usage)
 
-
-        # LabelFrame for the Table - Translated
+        # --- Table Frame ---
         table_frame = tk.LabelFrame(self, text="Doanh Thu Nhà Nghỉ", bg="#F5F5F5", font=("Arial", 12, "bold"))
         table_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
         # Columns Definition - Translated
-        column_identifiers = ("Mã", "Tên", "Giới tính", "Ngày sinh", "Quốc tịch", "Quê quán", "Ngày nhận phòng", "Loại phòng", "Số phòng", "Tổng tiền")
+        # Ensure this matches the order and number of fields in your RevenueData object
+        # and the get_values_for_treeview method if you implement it.
+        column_identifiers = ("Mã", "Tên", "Giới tính", "Ngày sinh", "Quốc tịch", "Quê quán", "Ngày nhận phòng", "Ngày trả phòng", "Loại phòng", "Số phòng", "Tổng tiền")
 
         # Treeview Widget
         self.tree = ttk.Treeview(table_frame, columns=column_identifiers, show="headings")
 
-        # Configure columns - Use translated identifiers
+        # Configure columns
         for col_id in column_identifiers:
             self.tree.heading(col_id, text=col_id)
-            self.tree.column(col_id, anchor="center", width=100) # Default width
+            # Adjust column widths as needed
+            self.tree.column(col_id, anchor="center", width=80) # Default width
 
-        # Adjust width and alignment for the price column
-        self.tree.column("Tổng tiền", anchor="e", width=100) # 'e' for east (right) alignment
+        # Specific column width adjustments
+        self.tree.column("Mã", width=60) # Adjust ID width
+        self.tree.column("Tên", width=150, anchor="w") # Wider for names, left-aligned
+        self.tree.column("Giới tính", width=80)
+        self.tree.column("Ngày sinh", width=100)
+        self.tree.column("Quốc tịch", width=100)
+        self.tree.column("Quê quán", width=150, anchor="w") # Wider for country, left-aligned
+        self.tree.column("Ngày nhận phòng", width=120)
+        self.tree.column("Ngày trả phòng", width=120)
+        self.tree.column("Loại phòng", width=80)
+        self.tree.column("Số phòng", width=80)
+        self.tree.column("Tổng tiền", anchor="e", width=120) # Right-aligned for currency, slightly wider
+
 
         # Add scrollbar
         scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
@@ -88,75 +90,115 @@ class Revenue(tk.Frame):
         scrollbar.pack(side="right", fill="y")
         self.tree.pack(side="left", padx=10, pady=5, fill="both", expand=True)
 
-        # insert initial data
-        self.load_customer_data()
-
-        # LabelFrame for Total Revenue - Translated
-        revenue_frame = tk.LabelFrame(self, text="Tổng Doanh Thu 30 Ngày Gần Nhất", bg="#F5F5F5", font=("Arial", 12, "bold"))
+        # --- Total Revenue Frame ---
+        revenue_frame = tk.LabelFrame(self, text="Tổng Doanh Thu", bg="#F5F5F5", font=("Arial", 12, "bold")) # Simplified title
         revenue_frame.pack(padx=10, pady=10, fill="x")
 
-        # Total Revenue Label - Translated
-        self.total_revenue_label = tk.Label(revenue_frame, text="Tổng Doanh Thu: " + format_currency(0), font=("Arial", 12, "bold"), bg="#F5F5F5")
-        self.total_revenue_label.pack(padx=10, pady=5)
+        # Frame to hold Label and Button side-by-side
+        total_display_frame = tk.Frame(revenue_frame, bg="#F5F5F5")
+        total_display_frame.pack(fill="x", padx=10, pady=5)
+        total_display_frame.columnconfigure(0, weight=1) # Make label column expandable
 
-        # update total revenue
+        # Total Revenue Label
+        self.total_revenue_label = tk.Label(total_display_frame, text="Tổng Doanh Thu: " + format_currency(0), font=("Arial", 12, "bold"), bg="#F5F5F5")
+        self.total_revenue_label.grid(row=0, column=0, sticky="w") # Use grid for side-by-side
+
+        # Refresh List Button (Renamed and command updated)
+        self.refresh_list_button = tk.Button(
+            total_display_frame,
+            text="Tải lại danh sách", # Button text
+            command=self.refresh_display, # Call the refresh method
+            font=("Arial", 10),
+            bg="#4CAF50", # Green background
+            fg="white", # White text
+            activebackground="#45a049", # Darker green when active
+            activeforeground="white",
+            bd=0, # No border
+            padx=10, # Padding
+            pady=5,
+            relief=tk.FLAT # Flat appearance
+        )
+        self.refresh_list_button.grid(row=0, column=1, sticky="e") # Use grid for side-by-side
+
+        # --- Initial Load and Calculation ---
+        # Load initial data into the treeview and calculate total
+        self.load_revenue_data()
         self.update_total_revenue()
 
-    def load_customer_data(self):
-        """Clears the treeview and loads data from self.customer_list."""
-        # Clear existing items
+
+    def load_revenue_data(self):
+        """Clears the treeview and loads data from self.revenue_list."""
+        print("[*] Loading revenue data into Treeview...")
+        # Clear existing items in the treeview
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        # Insert data from the list
+        # Insert data from the internal list (self.revenue_list)
         for revenue in self.revenue_list:
-            # Extract attributes into a tuple for the Treeview
-            # Make sure the order matches column_identifiers
-            revenue_values = (
-                revenue.id,
-                revenue.name,
-                revenue.sex,
-                revenue.birthday,
-                revenue.national,
-                revenue.country,
-                revenue.checkin_date,
-                revenue.room_type,
-                revenue.room_number,
-                revenue.total_price # Include the total price
-            )
-            # The treeview uses the column identifiers defined during setup,
-            # the order of values in the tuple must match the order of identifiers.
-            self.tree.insert("", "end", values=revenue_values)
+            # Ensure revenue is RevenueData and has the necessary attributes
+            if not isinstance(revenue, RevenueData):
+                 print(f"Warning: Found non-RevenueData object in list: {revenue}. Skipping.")
+                 continue # Skip non-RevenueData items
+
+            # Use the get_values_for_treeview method from RevenueData if available
+            # This makes the code cleaner and relies on the data class to provide the correct tuple
+            if hasattr(revenue, 'get_values_for_treeview') and callable(revenue.get_values_for_treeview):
+                 revenue_values = revenue.get_values_for_treeview()
+            else:
+                # Fallback if get_values_for_treeview is not implemented in RevenueData
+                # Ensure attribute names match RevenueData's __init__ and column_identifiers
+                revenue_values = (
+                    getattr(revenue, 'id', ''),
+                    getattr(revenue, 'name', ''),
+                    getattr(revenue, 'sex', ''),
+                    getattr(revenue, 'birthday', ''),
+                    getattr(revenue, 'national', ''), # Use nationality
+                    getattr(revenue, 'country', ''),
+                    getattr(revenue, 'checkin_date', ''),
+                    getattr(revenue, 'checkout_date', ''), # Added checkout_date
+                    getattr(revenue, 'room_type', ''),
+                    getattr(revenue, 'room_number', ''),
+                    getattr(revenue, 'total_price', 0.0) # Ensure price is treated as float
+                )
+
+            # Ensure the tuple length matches the number of columns
+            if len(revenue_values) == len(self.tree["columns"]):
+                 # Format the total_price for display in the treeview
+                 formatted_values = list(revenue_values) # Convert to list to modify
+                 # Find the index of the "Tổng tiền" column dynamically
+                 try:
+                      price_col_index = list(self.tree["columns"]).index("Tổng tiền")
+                      # Format the price at the correct index
+                      formatted_values[price_col_index] = format_currency(revenue_values[price_col_index])
+                 except ValueError:
+                      print("Warning: 'Tổng tiền' column not found for formatting in load_revenue_data.")
+                      # If column not found, insert raw values (might not be formatted)
+
+                 self.tree.insert("", "end", values=formatted_values) # Insert formatted values
+            else:
+                 print(f"Warning: Data tuple length mismatch for item {revenue}. Expected {len(self.tree['columns'])}, got {len(revenue_values)}. Skipping.")
+                 print(f"Values: {revenue_values}")
+
+        print("[✓] Revenue data loaded into Treeview.")
+
 
     def update_total_revenue(self):
-        """Calculates and updates the total revenue displayed."""
+        """Calculates and updates the total revenue displayed from the internal list."""
+        print("[*] Calculating total revenue from list...")
         total = 0.0
-        # Get the column index for "Tổng tiền" dynamically
-        # This is safer than hardcoding index 9
-        try:
-            price_col_index = list(self.tree["columns"]).index("Tổng tiền")
-        except ValueError:
-             print("Error: 'Tổng tiền' column not found in treeview columns.")
-             self.total_revenue_label.config(text="Error calculating revenue.")
-             return
-
-        # Iterate through all items in the treeview
-        for item_id in self.tree.get_children():
-            # Get the values for the current item
-            values = self.tree.item(item_id, "values")
-
-            # Check if the values tuple is long enough
-            if len(values) > price_col_index:
-                try:
-                    # Convert the price to float and add to total
-                    price = float(values[price_col_index])
-                    total += price
-                except ValueError:
-                    # Handle cases where the price isn't a number in that column
-                    print(f"Warning: Could not convert price to float for item values: {values}")
-                    pass # Skip this row
-            else:
-                 print(f"Warning: Item values too short, missing price column: {values}")
+        # Calculate total directly from the internal list (self.revenue_list)
+        # This is more reliable than parsing from the Treeview strings
+        for revenue in self.revenue_list:
+             if isinstance(revenue, RevenueData):
+                  # Safely get the total_price, default to 0.0 if not found or invalid
+                  price = getattr(revenue, 'total_price', 0.0)
+                  try:
+                      total += float(price) # Ensure it's a float before adding
+                  except (ValueError, TypeError):
+                      print(f"Warning: Could not convert total_price '{price}' to float for item {revenue}. Skipping.")
+                      pass # Skip this item's price if invalid
+             else:
+                  print(f"Warning: Found non-RevenueData object in list during total calculation: {revenue}. Skipping.")
 
 
         # Format the total revenue using the configured format_currency function
@@ -164,31 +206,55 @@ class Revenue(tk.Frame):
 
         # Update the label
         self.total_revenue_label.config(text=f"Tổng Doanh Thu: {formatted_total}")
+        print(f"[✓] Total revenue updated: {formatted_total}")
 
 
-    def add_record(self, customer: RevenueData):
-        customer_values = (
-            customer.id,
-            customer.name,
-            customer.sex,
-            customer.birthday,
-            customer.national,
-            customer.country,
-            customer.checkin_date,
-            customer.room_type,
-            customer.room_number,
-            customer.total_price # Include the total price
+    # --- Method to refresh the display from the internal list ---
+    # This method is called by the App when the tab is shown or when new data is added.
+    def refresh_display(self):
+        self.load_revenue_data() # Reload data from the internal list into Treeview
+        self.update_total_revenue() # Recalculate and update total
+
+
+    def add_sample_record(self):
+        print("[*] Adding sample revenue record...")
+        # Create a sample RevenueData object
+        # In a real application, this would come from user input or another process.
+        # For demonstration, we generate a random one.
+        sample_id = len(self.revenue_list) + 1 # Simple way to get a unique ID
+        sample_name = f"Khách Mẫu {sample_id}"
+        sample_sex = random.choice(["Nam", "Nữ"])
+        sample_birthday = "2000-01-01" # Example fixed date string
+        sample_national = "Việt Nam"
+        sample_country = "Hà Nội"
+        # Generate sample dates
+        start_date = datetime.now() - timedelta(days=random.randint(1, 30))
+        end_date = start_date + timedelta(days=random.randint(1, 10))
+        sample_checkin = start_date.strftime("%Y-%m-%d")
+        sample_checkout = end_date.strftime("%Y-%m-%d")
+
+        sample_room_type = random.choice(["Thường", "VIP"])
+        sample_room_number = random.randint(101, 305)
+        sample_price = random.randint(100000, 1000000) # Random price
+
+        sample_revenue = RevenueData(
+            id=sample_id,
+            name=sample_name,
+            sex=sample_sex,
+            birthday=sample_birthday,
+            national=sample_national, # Use nationality
+            country=sample_country,
+            checkin_date=sample_checkin,
+            checkout_date=sample_checkout,
+            room_type=sample_room_type,
+            room_number=sample_room_number,
+            total_price=int(sample_price) # Ensure total_price is a float
         )
 
-        # Insert the record and get its item ID
-        # The values are matched to columns based on the order defined when creating the treeview
-        item_id = self.tree.insert("", "end", values=customer_values)
+        # Add the sample record to the internal list
+        self.revenue_list.append(sample_revenue)
+        print(f"[✓] Sample revenue record added to list: ID {sample_revenue.id}")
 
-        # Move the new record to the top (index 0) if desired
-        # self.tree.move(item_id, "", 0) # Keep or remove
-
-        # Add the customer object to the internal list
-        self.revenue_list.append(customer)
-
-        # Update total revenue
-        self.update_total_revenue()
+        # Refresh the display to show the new record and update the total
+        self.refresh_display()
+        print("[✓] Revenue tab display refreshed after adding sample record.")
