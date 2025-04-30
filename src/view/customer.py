@@ -1,13 +1,17 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime, date # Import date
-# Assume CustomerInfo and DB_Connector are correctly imported
 from view.models import CustomerInfo
-# from database import DB_Connector
 from tkcalendar import Calendar
 from view.db.database import DB_Connector
 from typing import Callable # Import Callable for type hinting
 
+try:
+    from view.utils import capture_customer_image
+    CAPTURE_AVAILABLE = True
+except ImportError:
+    print("Warning: src/view/utils.py or capture_customer_image function not found. Image capture will be disabled.")
+    CAPTURE_AVAILABLE = False
 
 # --- Define colors --- (Keep consistent with Checkout)
 COLOR_PRIMARY_BLUE = "#3B82F6"
@@ -243,11 +247,158 @@ class Customer(tk.Frame):
 
 
     # --- open_add_customer method (UPDATED for Room Number Dropdown) ---
+    # def open_add_customer(self):
+    #     add_window = tk.Toplevel(self, bg=COLOR_BACKGROUND_LIGHT)
+    #     add_window.title("Thêm khách hàng mới")
+    #     # Adjusted geometry to fit potentially more fields/widgets
+    #     add_window.geometry("450x500")
+    #     add_window.transient(self.winfo_toplevel())
+    #     add_window.grab_set()
+    #
+    #     padding_frame = tk.Frame(add_window, bg=COLOR_BACKGROUND_LIGHT, padx=20, pady=20)
+    #     padding_frame.pack(fill="both", expand=True)
+    #
+    #     entries = {} # Use a dict to store Entry/Combobox widgets
+    #
+    #     # Use the fields defined in __init__ for consistency
+    #     add_fields_and_titles = self.customer_fields
+    #     field_title_map = {field: title for title, field in self.customer_fields}
+    #
+    #
+    #     for i, (title, field) in enumerate(add_fields_and_titles):
+    #         tk.Label(padding_frame, text=title + ":", font=("Arial", 10), bg=COLOR_BACKGROUND_LIGHT, fg=COLOR_TEXT_DARK).grid(
+    #             row=i, column=0, padx=5, pady=5, sticky="w"
+    #         )
+    #
+    #         if field == "sex":
+    #              combobox_items = ["Nam", "Nữ", "Khác"]
+    #              widget = ttk.Combobox(padding_frame, values=combobox_items, state="readonly", font=("Arial", 10))
+    #              widget.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
+    #              widget.current(0)
+    #              entries[field] = widget # Store the Combobox widget
+    #         elif field == "room_type":
+    #              combobox_items = ["Thường", "VIP"]
+    #              widget = ttk.Combobox(padding_frame, values=combobox_items, state="readonly", font=("Arial", 10))
+    #              widget.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
+    #              widget.current(0)
+    #              entries[field] = widget # Store the Combobox widget
+    #         elif field == "room_number":
+    #              # --- Room Number Combobox ---
+    #              available_rooms = self._get_available_room_numbers()
+    #              widget = ttk.Combobox(padding_frame, values=available_rooms, state="readonly", font=("Arial", 10))
+    #              widget.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
+    #              # Optionally set the first available room as default
+    #              if available_rooms:
+    #                  widget.current(0)
+    #              entries[field] = widget # Store the Combobox widget
+    #              # --- End Room Number Combobox ---
+    #         elif field in ["birthday", "checkin_date"]:
+    #              # Use an Entry (readonly) and a button for dates (Calendar outputs YYYY-MM-DD)
+    #              entry = tk.Entry(padding_frame, font=("Arial", 10), state="readonly")
+    #              entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
+    #              entries[field] = entry # Store entry reference
+    #              date_button_command = self.create_calendar_command(padding_frame, entry, field)
+    #              date_button = tk.Button(padding_frame, text="Chọn ngày", command=date_button_command, font=("Arial", 8), padx=2, pady=2)
+    #              date_button.grid(row=i, column=2, padx=(0, 5), pady=5, sticky="w")
+    #              # No need to store date_button in entries dict
+    #         else:
+    #              # Standard Entry for other fields (id, name, nationality, country)
+    #              entry = tk.Entry(padding_frame, font=("Arial", 10))
+    #              entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
+    #              entries[field] = entry # Store the Entry widget
+    #
+    #
+    #     padding_frame.columnconfigure(1, weight=1) # Entry/Combobox column expands
+    #
+    #
+    #     def submit():
+    #         new_customer_values = {}
+    #         for field, widget in entries.items():
+    #              # Get value from Entry or Combobox
+    #              if isinstance(widget, (tk.Entry, ttk.Combobox)):
+    #                   new_customer_values[field] = widget.get().strip() # Get value and strip whitespace
+    #              elif isinstance(widget, tk.Label) and field == 'id':
+    #                   # Should not happen in add window, but for consistency
+    #                   new_customer_values[field] = widget.cget("text").strip()
+    #
+    #
+    #         # Validation
+    #         # room_number is now validated by the Combobox selection, but check if it's empty
+    #         required_fields = ['id', 'name', 'checkin_date', 'room_type', 'room_number']
+    #         for field in required_fields:
+    #              if not new_customer_values.get(field):
+    #                   messagebox.showerror("Lỗi", f"Trường '{field_title_map.get(field, field)}' không được để trống.")
+    #                   return
+    #
+    #         # Validate ID is numeric
+    #         if not new_customer_values['id'].isdigit():
+    #             messagebox.showerror("Lỗi", "ID phải là số.")
+    #             return
+    #
+    #         # Validate dates are in YYYY-MM-DD format if not empty
+    #         for field in ['birthday', 'checkin_date']:
+    #              date_str = new_customer_values.get(field)
+    #              if date_str: # Only validate if not empty
+    #                   try:
+    #                        datetime.strptime(date_str, "%Y-%m-%d")
+    #                   except ValueError:
+    #                        messagebox.showerror("Lỗi định dạng ngày", f"Trường '{field_title_map.get(field, field)}' có định dạng không hợp lệ. Vui lòng dùng YYYY-MM-DD.")
+    #                        return
+    #
+    #         # Check if room number is already occupied (should be handled by dropdown, but double check)
+    #         if new_customer_values.get('room_number') in self._get_occupied_room_numbers():
+    #              messagebox.showerror("Lỗi", f"Số phòng {new_customer_values.get('room_number')} đã có khách thuê.")
+    #              return
+    #
+    #
+    #         # Create CustomerInfo object (passing YYYY-MM-DD strings or empty strings)
+    #         new_customer_info = CustomerInfo(
+    #             id=new_customer_values.get('id'),
+    #             name=new_customer_values.get('name'),
+    #             sex=new_customer_values.get('sex'),
+    #             birthday=new_customer_values.get('birthday'), # Store as YYYY-MM-DD string
+    #             national=new_customer_values.get('national'), # Use nationality
+    #             country=new_customer_values.get('country'),
+    #             checkin_date=new_customer_values.get('checkin_date'), # Store as YYYY-MM-DD string
+    #             room_type=new_customer_values.get('room_type'),
+    #             room_number=new_customer_values.get('room_number') # Store the selected room number string
+    #         )
+    #
+    #         # Add to customer_list and Treeview
+    #         self.customer_list.append(new_customer_info)
+    #         self.populate_treeview() # Repopulate to ensure data is fresh and sorted/ordered
+    #
+    #         # Add to database
+    #         try:
+    #             self.db_conn.setCustomerToDatabase(new_customer_info) # Expects CustomerInfo with YYYY-MM-DD strings
+    #             messagebox.showinfo("Thành công", "Đã thêm khách hàng mới.")
+    #             # Call the refresh callback after adding a customer
+    #             if self.refresh_room_management_callback:
+    #                  self.refresh_room_management_callback()
+    #             add_window.destroy()
+    #
+    #         except Exception as e:
+    #             messagebox.showerror("Lỗi Database", f"Không thể thêm khách hàng vào database:\n{e}")
+    #             # Optional: remove the added customer from list/treeview if DB fails?
+    #             # self.customer_list.pop()
+    #             # self.populate_treeview()
+    #
+    #
+    #     button_frame_bottom = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
+    #     button_frame_bottom.grid(row=len(add_fields_and_titles), column=0, columnspan=3, pady=10)
+    #     button_frame_bottom.columnconfigure(0, weight=1)
+    #
+    #     submit_btn = tk.Button(button_frame_bottom, text="LƯU KHÁCH HÀNG", command=submit,
+    #                            font=("Arial", 10, "bold"), bg=COLOR_ACCENT_GREEN, fg="white",
+    #                            activebackground="#1e7e34", activeforeground="white",
+    #                            relief=tk.RAISED, padx=10, pady=5, cursor="hand2")
+    #     submit_btn.pack(expand=True)
+
     def open_add_customer(self):
         add_window = tk.Toplevel(self, bg=COLOR_BACKGROUND_LIGHT)
         add_window.title("Thêm khách hàng mới")
-        # Adjusted geometry to fit potentially more fields/widgets
-        add_window.geometry("450x500")
+        # Adjusted geometry to fit potentially more fields/widgets and the new button
+        add_window.geometry("450x550") # Increased height slightly
         add_window.transient(self.winfo_toplevel())
         add_window.grab_set()
 
@@ -289,7 +440,7 @@ class Customer(tk.Frame):
                  entries[field] = widget # Store the Combobox widget
                  # --- End Room Number Combobox ---
             elif field in ["birthday", "checkin_date"]:
-                 # Use an Entry (readonly) and a button for dates (Calendar outputs YYYY-MM-DD)
+                 # Use an Entry (readonly) and a button for dates (Calendar outputs JPanel-MM-DD)
                  entry = tk.Entry(padding_frame, font=("Arial", 10), state="readonly")
                  entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
                  entries[field] = entry # Store entry reference
@@ -305,6 +456,45 @@ class Customer(tk.Frame):
 
 
         padding_frame.columnconfigure(1, weight=1) # Entry/Combobox column expands
+
+        # --- Capture Image Button ---
+        # Placed below the input fields
+        capture_button_frame = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
+        # Grid this frame below the last input field row
+        capture_button_frame.grid(row=len(add_fields_and_titles), column=0, columnspan=3, pady=(15, 5))
+        capture_button_frame.columnconfigure(0, weight=1) # Center the button
+
+        def on_capture_click():
+            """Handles the click event for the Capture Image button."""
+            customer_name = entries.get('id').get().strip() # Get name from the 'name' entry widget
+
+            if not customer_name:
+                messagebox.showwarning("Cảnh báo", "Vui lòng nhập ID trước khi chụp ảnh.")
+                return
+
+            if not CAPTURE_AVAILABLE:
+                 messagebox.showerror("Lỗi", "Chức năng chụp ảnh không khả dụng. Vui lòng kiểm tra file view/utils.py.")
+                 return
+
+            # Call the external capture function
+            # This function should handle opening the camera, capturing, and saving
+            print(f"[*] Attempting to capture image for customer: {customer_name}")
+            success = capture_customer_image(customer_name) # Call the utility function
+
+            if success:
+                messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_name}'.")
+            else:
+                messagebox.showwarning("Thất bại", f"Không thể chụp hoặc lưu ảnh cho khách hàng '{customer_name}'. Vui lòng kiểm tra camera và quyền truy cập.")
+
+
+        capture_btn = tk.Button(
+            capture_button_frame, text="CHỤP ẢNH", command=on_capture_click,
+            font=("Arial", 10, "bold"), bg=COLOR_ACCENT_TEAL, fg="white",
+            activebackground="#117a8b", activeforeground="white",
+            relief=tk.RAISED, padx=10, pady=5, cursor="hand2",
+            state=tk.NORMAL if CAPTURE_AVAILABLE else tk.DISABLED # Enable/Disable based on utility availability
+        )
+        capture_btn.pack(expand=True) # Center the button
 
 
         def submit():
@@ -331,14 +521,14 @@ class Customer(tk.Frame):
                 messagebox.showerror("Lỗi", "ID phải là số.")
                 return
 
-            # Validate dates are in YYYY-MM-DD format if not empty
+            # Validate dates are in JPanel-MM-DD format if not empty
             for field in ['birthday', 'checkin_date']:
                  date_str = new_customer_values.get(field)
                  if date_str: # Only validate if not empty
                       try:
                            datetime.strptime(date_str, "%Y-%m-%d")
                       except ValueError:
-                           messagebox.showerror("Lỗi định dạng ngày", f"Trường '{field_title_map.get(field, field)}' có định dạng không hợp lệ. Vui lòng dùng YYYY-MM-DD.")
+                           messagebox.showerror("Lỗi định dạng ngày", f"Trường '{field_title_map.get(field, field)}' có định dạng không hợp lệ. Vui lòng dùng JPanel-MM-DD.")
                            return
 
             # Check if room number is already occupied (should be handled by dropdown, but double check)
@@ -347,15 +537,15 @@ class Customer(tk.Frame):
                  return
 
 
-            # Create CustomerInfo object (passing YYYY-MM-DD strings or empty strings)
+            # Create CustomerInfo object (passing JPanel-MM-DD strings or empty strings)
             new_customer_info = CustomerInfo(
                 id=new_customer_values.get('id'),
                 name=new_customer_values.get('name'),
                 sex=new_customer_values.get('sex'),
-                birthday=new_customer_values.get('birthday'), # Store as YYYY-MM-DD string
-                national=new_customer_values.get('national'), # Use nationality
+                birthday=new_customer_values.get('birthday'), # Store as JPanel-MM-DD string
+                national=new_customer_values.get('nationality'), # Use nationality
                 country=new_customer_values.get('country'),
-                checkin_date=new_customer_values.get('checkin_date'), # Store as YYYY-MM-DD string
+                checkin_date=new_customer_values.get('checkin_date'), # Store as JPanel-MM-DD string
                 room_type=new_customer_values.get('room_type'),
                 room_number=new_customer_values.get('room_number') # Store the selected room number string
             )
@@ -366,7 +556,7 @@ class Customer(tk.Frame):
 
             # Add to database
             try:
-                self.db_conn.setCustomerToDatabase(new_customer_info) # Expects CustomerInfo with YYYY-MM-DD strings
+                self.db_conn.setCustomerToDatabase(new_customer_info) # Expects CustomerInfo with JPanel-MM-DD strings
                 messagebox.showinfo("Thành công", "Đã thêm khách hàng mới.")
                 # Call the refresh callback after adding a customer
                 if self.refresh_room_management_callback:
@@ -381,7 +571,7 @@ class Customer(tk.Frame):
 
 
         button_frame_bottom = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
-        button_frame_bottom.grid(row=len(add_fields_and_titles), column=0, columnspan=3, pady=10)
+        button_frame_bottom.grid(row=len(add_fields_and_titles) + 1, column=0, columnspan=3, pady=(5, 0)) # Placed below capture button frame
         button_frame_bottom.columnconfigure(0, weight=1)
 
         submit_btn = tk.Button(button_frame_bottom, text="LƯU KHÁCH HÀNG", command=submit,
