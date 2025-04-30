@@ -66,7 +66,7 @@ INSERT INTO customers (id, name, sex, birthday, national, country, checkin_date,
 
 -- Revenue table structure
 CREATE TABLE revenues (
-    id INT PRIMARY KEY,
+    id INT,
     name VARCHAR(255) NOT NULL,
     sex VARCHAR(10),
     birthday DATE,

@@ -48,14 +48,6 @@ class RevenueData(CustomerInfo):
         self.checkout_date = checkout_date
         self.total_price = total_price
 
-    # def _format_date_input(self, date_value):
-    #     if isinstance(date_value, datetime):
-    #         return date_value.strftime("%Y-%m-%d")
-    #     elif isinstance(date_value, str) and date_value:
-    #         return date_value
-    #     else:
-    #         return "" # Store as empty string if None or invalid
-
     def haveNone(self):
         critical_fields = [self.id, self.name, self.checkin_date, self.checkout_date, self.room_type, self.room_number]
         return any(field is None or field == "" for field in critical_fields)

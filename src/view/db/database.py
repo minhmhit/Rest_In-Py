@@ -175,8 +175,8 @@ class DB_Connector:
         cursor = self.conn.cursor()
         try:
              cursor.execute("""
-                 INSERT INTO revenues (id, name, sex, birthday, national, country, checkin_date, room_type, room_number, total_price)
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 INSERT INTO revenues (id, name, sex, birthday, national, country, checkin_date, checkout_date, room_type, room_number, total_price)
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
              """, (
                  revenue_data.id,
                  revenue_data.name,
@@ -185,8 +185,10 @@ class DB_Connector:
                  revenue_data.national,
                  revenue_data.country,
                  revenue_data.checkin_date if revenue_data.checkin_date else None, # Use None for empty string for DB
+                 revenue_data.checkout_date if revenue_data.checkout_date else None,
                  revenue_data.room_type,
                  revenue_data.room_number,
+                 revenue_data.total_price,
              ))
              self.conn.commit()
              print(f"Revenue {revenue_data.id} added to database.")
@@ -236,7 +238,7 @@ class DB_Connector:
         finally:
             cursor.close()
 
-    def removeRevenueFromDatabase(self, revenue_id: str):
+    def removeRevenueFromDatabase(self):
         if not self.conn or not self.conn.is_connected():
             print("DB Connection not available for removeRevenue.")
             return
@@ -245,13 +247,13 @@ class DB_Connector:
         try:
              # Use parameterized query to prevent SQL injection
              cursor.execute("""
-                 DELETE FROM revenues
-                 WHERE id = %s;
-             """, (revenue_id,)) # Pass customer_id as a tuple
+                DELETE FROM revenues
+                WHERE CURRENT_DATE >= checkout_date + INTERVAL '30 days';
+             """) 
              self.conn.commit()
-             print(f"Customer {revenue_id} removed from database.")
+             print(f"Removed old Revenue from database.")
         except mysql.connector.Error as err:
-            print(f"Error removing customer {revenue_id}: {err}")
+            print(f"Error removing revenue")
             self.conn.rollback()
         finally:
             cursor.close()
