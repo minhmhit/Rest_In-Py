@@ -6,7 +6,16 @@ from view.models import CustomerInfo
 # from database import DB_Connector
 from tkcalendar import Calendar
 from view.db.database import DB_Connector
-from typing import Callable # Import Callable for type hinting
+from typing import Callable, List # Import Callable and List for type hinting
+
+# Import the new utility function for capturing images
+# Make sure to create src/view/utils.py and implement capture_customer_image there
+# try:
+#     from view.utils import capture_customer_image
+#     CAPTURE_AVAILABLE = True
+# except ImportError:
+#     print("Warning: src/view/utils.py or capture_customer_image function not found. Image capture will be disabled.")
+#     CAPTURE_AVAILABLE = False
 
 
 # --- Define colors --- (Keep consistent with Checkout)
@@ -22,25 +31,28 @@ COLOR_TEXT_MEDIUM = "#555555"
 COLOR_BORDER_GRAY = "#cccccc"
 
 # --- Define all possible room numbers ---
-# Pattern: 101-109, 201-209, ..., 901-909
+# Moved outside method for efficiency
 ALL_ROOM_NUMBERS = [f"{floor * 100 + room}" for floor in range(1, 10) for room in range(1, 10)]
 
 
 class Customer(tk.Frame):
-    # Added refresh_room_management_callback parameter
-    def __init__(self, parent,show_tab,controller,customer_list,db_conn: DB_Connector,refresh_room_management_callback):
+    # Added refresh_room_management_callback parameter (assuming App still provides this)
+    # controller is the App instance
+    def __init__(self, parent,show_tab: Callable[[str], None],controller,customer_list: List[CustomerInfo],db_conn: DB_Connector,refresh_room_management_callback: Callable[[], None] | None =None):
         super().__init__(parent, bg=COLOR_BACKGROUND_LIGHT)
         self.show_tab = show_tab
-        self.controller = controller # Assumed to be the object receiving customer data for checkout
+        # self.controller is the App instance
+        self.controller = controller
         self.customer_list = customer_list # The list holding CustomerInfo objects
         self.db_conn = db_conn
+        # Store the callback for refreshing Room Management, default to None if not provided
         self.refresh_room_management_callback = refresh_room_management_callback
 
 
         # Define fields for consistency
         self.customer_fields = [
             ("ID", "id"), ("Họ Tên", "name"), ("Giới Tính", "sex"), ("Ngày Sinh", "birthday"),
-            ("Quốc Tịch", "national"), ("Quê Quán", "country"), ("Ngày Thuê Phòng", "checkin_date"), # Changed 'national' to 'nationality'
+            ("Quốc Tịch", "national"), ("Quê Quán", "country"), ("Ngày Thuê Phòng", "checkin_date"),
             ("Loại Phòng", "room_type"), ("Số Phòng", "room_number"), # room_number field
         ]
         self.treeview_columns = [title for title, field in self.customer_fields]
@@ -175,11 +187,11 @@ class Customer(tk.Frame):
                          str(getattr(customer, 'name', '') if getattr(customer, 'name', None) is not None else ""),
                          str(getattr(customer, 'sex', '') if getattr(customer, 'sex', None) is not None else ""),
                          getattr(customer, 'birthday', ''), # May be datetime or string
-                         str(getattr(customer, 'national', '') if getattr(customer, 'national', None) is not None else ""), # Use nationality
+                         str(getattr(customer, 'national', '') if getattr(customer, 'national', None) is not None else ""),
                          str(getattr(customer, 'country', '') if getattr(customer, 'country', None) is not None else ""),
                          getattr(customer, 'checkin_date', ''), # May be datetime or string
                          str(getattr(customer, 'room_type', '') if getattr(customer, 'room_type', None) is not None else ""),
-                         str(getattr(customer, 'room_number', '') if getattr(customer, 'room_number', None) is not None else ""), # room_number
+                         str(getattr(customer, 'room_number', '') if getattr(customer, 'room_number', None) is not None else ""),
                      )
 
                      # Ensure dates are YYYY-MM-DD strings for the Treeview
@@ -212,11 +224,9 @@ class Customer(tk.Frame):
               def select_date():
                    # get_date() returns string in date_pattern format (yyyy-mm-dd)
                    selected_date_str = cal.get_date()
-                   # Temporarily set state to normal to allow insertion
                    entry_widget.config(state="normal")
                    entry_widget.delete(0, tk.END)
                    entry_widget.insert(0, selected_date_str) # Insert YYYY-MM-DD string
-                   # Set state back to readonly
                    entry_widget.config(state="readonly")
                    top.destroy()
 
@@ -242,12 +252,12 @@ class Customer(tk.Frame):
         return mapping.get(field_name, field_name)
 
 
-    # --- open_add_customer method (UPDATED for Room Number Dropdown) ---
+    # --- open_add_customer method (UPDATED for Room Number Dropdown and Capture Button) ---
     def open_add_customer(self):
         add_window = tk.Toplevel(self, bg=COLOR_BACKGROUND_LIGHT)
         add_window.title("Thêm khách hàng mới")
-        # Adjusted geometry to fit potentially more fields/widgets
-        add_window.geometry("450x500")
+        # Adjusted geometry to fit potentially more fields/widgets and the new button
+        add_window.geometry("450x550") # Increased height slightly
         add_window.transient(self.winfo_toplevel())
         add_window.grab_set()
 
@@ -298,7 +308,7 @@ class Customer(tk.Frame):
                  date_button.grid(row=i, column=2, padx=(0, 5), pady=5, sticky="w")
                  # No need to store date_button in entries dict
             else:
-                 # Standard Entry for other fields (id, name, nationality, country)
+                 # Standard Entry for other fields (id, name, national, country)
                  entry = tk.Entry(padding_frame, font=("Arial", 10))
                  entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
                  entries[field] = entry # Store the Entry widget
@@ -306,16 +316,58 @@ class Customer(tk.Frame):
 
         padding_frame.columnconfigure(1, weight=1) # Entry/Combobox column expands
 
+        # --- Capture Image Button ---
+        # Placed below the input fields
+        capture_button_frame = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
+        # Grid this frame below the last input field row
+        capture_button_frame.grid(row=len(add_fields_and_titles), column=0, columnspan=3, pady=(15, 5))
+        capture_button_frame.columnconfigure(0, weight=1) # Center the button
+
+        def on_capture_click():
+            """Handles the click event for the Capture Image button."""
+            # Get name from the 'name' entry widget safely
+            name_entry_widget = entries.get('name')
+            customer_name = name_entry_widget.get().strip() if name_entry_widget else ""
+
+            if not customer_name:
+                if self.winfo_exists(): # Check if main window still exists
+                    messagebox.showwarning("Cảnh báo", "Vui lòng nhập Tên khách hàng trước khi chụp ảnh.")
+                return
+
+            if not CAPTURE_AVAILABLE:
+                 if self.winfo_exists(): # Check if main window still exists
+                      messagebox.showerror("Lỗi", "Chức năng chụp ảnh không khả dụng. Vui lòng kiểm tra file view/utils.py.")
+                 return
+
+            # Call the external capture function
+            # This function should handle opening the camera, capturing, and saving
+            print(f"[*] Attempting to capture image for customer: {customer_name}")
+            success = capture_customer_image(customer_name) # Call the utility function
+
+            if success:
+                if self.winfo_exists(): # Check if main window still exists
+                    messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_name}'.")
+            else:
+                if self.winfo_exists(): # Check if main window still exists
+                    messagebox.showwarning("Thất bại", f"Không thể chụp hoặc lưu ảnh cho khách hàng '{customer_name}'. Vui lòng kiểm tra camera và quyền truy cập.")
+
+
+        capture_btn = tk.Button(
+            capture_button_frame, text="CHỤP ẢNH", command=on_capture_click,
+            font=("Arial", 10, "bold"), bg=COLOR_ACCENT_TEAL, fg="white",
+            activebackground="#117a8b", activeforeground="white",
+            relief=tk.RAISED, padx=10, pady=5, cursor="hand2",
+            state=tk.NORMAL if CAPTURE_AVAILABLE else tk.DISABLED # Enable/Disable based on utility availability
+        )
+        capture_btn.pack(expand=True) # Center the button
+
 
         def submit():
             new_customer_values = {}
             for field, widget in entries.items():
-                 # Get value from Entry or Combobox
-                 if isinstance(widget, (tk.Entry, ttk.Combobox)):
-                      new_customer_values[field] = widget.get().strip() # Get value and strip whitespace
-                 elif isinstance(widget, tk.Label) and field == 'id':
-                      # Should not happen in add window, but for consistency
-                      new_customer_values[field] = widget.cget("text").strip()
+                # Use getattr safely in case a widget was not created for a field
+                widget_value = getattr(widget, 'get', lambda: '')() # Get value if get method exists, otherwise empty string
+                new_customer_values[field] = str(widget_value).strip() # Ensure it's a string and strip whitespace
 
 
             # Validation
@@ -323,12 +375,16 @@ class Customer(tk.Frame):
             required_fields = ['id', 'name', 'checkin_date', 'room_type', 'room_number']
             for field in required_fields:
                  if not new_customer_values.get(field):
-                      messagebox.showerror("Lỗi", f"Trường '{field_title_map.get(field, field)}' không được để trống.")
-                      return
+                      # Check if the main window still exists before showing messagebox
+                      if self.winfo_exists():
+                           messagebox.showerror("Lỗi", f"Trường '{field_title_map.get(field, field)}' không được để trống.")
+                      return # Always return after an error
 
             # Validate ID is numeric
             if not new_customer_values['id'].isdigit():
-                messagebox.showerror("Lỗi", "ID phải là số.")
+                # Check if the main window still exists before showing messagebox
+                if self.winfo_exists():
+                     messagebox.showerror("Lỗi", "ID phải là số.")
                 return
 
             # Validate dates are in YYYY-MM-DD format if not empty
@@ -338,12 +394,17 @@ class Customer(tk.Frame):
                       try:
                            datetime.strptime(date_str, "%Y-%m-%d")
                       except ValueError:
-                           messagebox.showerror("Lỗi định dạng ngày", f"Trường '{field_title_map.get(field, field)}' có định dạng không hợp lệ. Vui lòng dùng YYYY-MM-DD.")
+                           # Check if the main window still exists before showing messagebox
+                           if self.winfo_exists():
+                                messagebox.showerror("Lỗi định dạng ngày", f"Trường '{field_title_map.get(field, field)}' có định dạng không hợp lệ. Vui lòng dùng YYYY-MM-DD.")
                            return
 
             # Check if room number is already occupied (should be handled by dropdown, but double check)
+            # Need to get occupied rooms dynamically here as well
             if new_customer_values.get('room_number') in self._get_occupied_room_numbers():
-                 messagebox.showerror("Lỗi", f"Số phòng {new_customer_values.get('room_number')} đã có khách thuê.")
+                 # Check if the main window still exists before showing messagebox
+                 if self.winfo_exists():
+                      messagebox.showerror("Lỗi", f"Số phòng {new_customer_values.get('room_number')} đã có khách thuê.")
                  return
 
 
@@ -353,11 +414,11 @@ class Customer(tk.Frame):
                 name=new_customer_values.get('name'),
                 sex=new_customer_values.get('sex'),
                 birthday=new_customer_values.get('birthday'), # Store as YYYY-MM-DD string
-                national=new_customer_values.get('national'), # Use nationality
+                national=new_customer_values.get('national'),
                 country=new_customer_values.get('country'),
                 checkin_date=new_customer_values.get('checkin_date'), # Store as YYYY-MM-DD string
                 room_type=new_customer_values.get('room_type'),
-                room_number=new_customer_values.get('room_number') # Store the selected room number string
+                room_number=new_customer_values.get('room_number')
             )
 
             # Add to customer_list and Treeview
@@ -366,22 +427,33 @@ class Customer(tk.Frame):
 
             # Add to database
             try:
-                self.db_conn.setCustomerToDatabase(new_customer_info) # Expects CustomerInfo with YYYY-MM-DD strings
-                messagebox.showinfo("Thành công", "Đã thêm khách hàng mới.")
-                # Call the refresh callback after adding a customer
+                if self.db_conn: # Check if db_conn is available
+                    self.db_conn.setCustomerToDatabase(new_customer_info) # Expects CustomerInfo with YYYY-MM-DD strings
+                    # Check if the main window still exists before showing messagebox
+                    if self.winfo_exists():
+                         messagebox.showinfo("Thành công", "Đã thêm khách hàng mới.")
+                else:
+                    print("[!] Database connection not available. Cannot save customer to DB.")
+                    if self.winfo_exists():
+                         messagebox.showwarning("Lỗi Database", "Không có kết nối database. Không thể lưu khách hàng.")
+
+                # Call the refresh callback for Room Management if it exists
                 if self.refresh_room_management_callback:
                      self.refresh_room_management_callback()
                 add_window.destroy()
 
             except Exception as e:
-                messagebox.showerror("Lỗi Database", f"Không thể thêm khách hàng vào database:\n{e}")
-                # Optional: remove the added customer from list/treeview if DB fails?
+                print(f"[!] Database error during add customer: {e}") # Print error to console for debugging
+                # Check if the main window still exists before showing messagebox
+                if self.winfo_exists():
+                     messagebox.showerror("Lỗi Database", f"Không thể thêm khách hàng vào database:\n{e}")
+                # Optional: revert change in self.customer_list/treeview if DB fails?
                 # self.customer_list.pop()
                 # self.populate_treeview()
 
 
         button_frame_bottom = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
-        button_frame_bottom.grid(row=len(add_fields_and_titles), column=0, columnspan=3, pady=10)
+        button_frame_bottom.grid(row=len(add_fields_and_titles) + 1, column=0, columnspan=3, pady=(5, 0)) # Placed below capture button frame
         button_frame_bottom.columnconfigure(0, weight=1)
 
         submit_btn = tk.Button(button_frame_bottom, text="LƯU KHÁCH HÀNG", command=submit,
@@ -395,7 +467,9 @@ class Customer(tk.Frame):
     def change_customer_information(self):
         selected_item_id = self.tree.selection()
         if not selected_item_id:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để chỉnh sửa")
+            # Check if the main window still exists before showing messagebox
+            if self.winfo_exists():
+                 messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để chỉnh sửa")
             return
 
         customer_id_to_edit = selected_item_id[0]
@@ -407,13 +481,15 @@ class Customer(tk.Frame):
                  break
 
         if not selected_customer:
-             messagebox.showerror("Lỗi dữ liệu", f"Không tìm thấy dữ liệu khách hàng với ID {customer_id_to_edit} trong danh sách.")
+             # Check if the main window still exists before showing messagebox
+             if self.winfo_exists():
+                  messagebox.showerror("Lỗi dữ liệu", f"Không tìm thấy dữ liệu khách hàng với ID {customer_id_to_edit} trong danh sách.")
              return
 
         edit_window = tk.Toplevel(self, bg=COLOR_BACKGROUND_LIGHT)
         edit_window.title(f"Chỉnh sửa thông tin: {getattr(selected_customer, 'name', '...')}")
         # Adjusted geometry
-        edit_window.geometry("450x500")
+        edit_window.geometry("450x550") # Increased height slightly
         edit_window.transient(self.winfo_toplevel())
         edit_window.grab_set()
 
@@ -433,7 +509,7 @@ class Customer(tk.Frame):
 
             # Get the current value from the selected customer object
             # Ensure dates are already YYYY-MM-DD strings from CustomerInfo
-            current_value = getattr(selected_customer, field, None)
+            current_value = getattr(selected_customer, field, "")
             current_value_str = str(current_value) if current_value is not None else "" # Ensure it's a string
 
 
@@ -503,7 +579,7 @@ class Customer(tk.Frame):
                  date_button.grid(row=i, column=2, padx=(0, 5), pady=5, sticky="w")
                  # No need to store date_button in entries dict
             else:
-                 # Standard Entry for other fields (name, nationality, country)
+                 # Standard Entry for other fields (name, national, country)
                  entry = tk.Entry(padding_frame, font=("Arial", 10))
                  entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
                  entry.insert(0, current_value_str) # Insert current value string
@@ -511,14 +587,58 @@ class Customer(tk.Frame):
 
         padding_frame.columnconfigure(1, weight=1)
 
+        # --- Capture Image Button (in Edit window - Optional, but included for consistency) ---
+        # You might want to capture a new image when editing a customer too
+        capture_button_frame = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
+        # Grid this frame below the last input field row
+        capture_button_frame.grid(row=len(edit_fields_and_titles), column=0, columnspan=3, pady=(15, 5))
+        capture_button_frame.columnconfigure(0, weight=1) # Center the button
+
+        def on_capture_click_edit():
+            """Handles the click event for the Capture Image button in the Edit window."""
+            # Get name from the 'name' entry widget safely
+            name_entry_widget = entries.get('name')
+            customer_name = name_entry_widget.get().strip() if name_entry_widget else ""
+
+            if not customer_name:
+                if self.winfo_exists(): # Check if main window still exists
+                     messagebox.showwarning("Cảnh báo", "Vui lòng nhập Tên khách hàng trước khi chụp ảnh.")
+                return
+
+            if not CAPTURE_AVAILABLE:
+                 if self.winfo_exists(): # Check if main window still exists
+                      messagebox.showerror("Lỗi", "Chức năng chụp ảnh không khả dụng. Vui lòng kiểm tra file view/utils.py.")
+                 return
+
+            # Call the external capture function
+            print(f"[*] Attempting to capture image for customer: {customer_name}")
+            success = capture_customer_image(customer_name) # Call the utility function
+
+            if success:
+                if self.winfo_exists(): # Check if main window still exists
+                     messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh mới cho khách hàng '{customer_name}'.")
+            else:
+                if self.winfo_exists(): # Check if main window still exists
+                     messagebox.showwarning("Thất bại", f"Không thể chụp hoặc lưu ảnh cho khách hàng '{customer_name}'. Vui lòng kiểm tra camera và quyền truy cập.")
+
+
+        capture_btn = tk.Button(
+            capture_button_frame, text="CHỤP ẢNH MỚI", command=on_capture_click_edit,
+            font=("Arial", 10, "bold"), bg=COLOR_ACCENT_TEAL, fg="white",
+            activebackground="#117a8b", activeforeground="white",
+            relief=tk.RAISED, padx=10, pady=5, cursor="hand2",
+            state=tk.NORMAL if CAPTURE_AVAILABLE else tk.DISABLED # Enable/Disable based on utility availability
+        )
+        capture_btn.pack(expand=True) # Center the button
+        # --- End Capture Image Button (Edit window) ---
+
 
         def save_changes():
             updated_values = {}
             for field, widget in entries.items():
-                 if isinstance(widget, (tk.Entry, ttk.Combobox)):
-                      updated_values[field] = widget.get().strip() # Get value from Entry or Combobox
-                 elif isinstance(widget, tk.Label) and field == 'id':
-                      updated_values[field] = widget.cget("text").strip() # Get ID from label
+                 # Use getattr safely in case a widget was not created for a field
+                widget_value = getattr(widget, 'get', lambda: '')() # Get value if get method exists, otherwise empty string
+                updated_values[field] = str(widget_value).strip() # Ensure it's a string and strip whitespace
 
 
             # Validation (similar to add customer)
@@ -526,7 +646,9 @@ class Customer(tk.Frame):
             required_fields = ['id', 'name', 'checkin_date', 'room_type', 'room_number']
             for field in required_fields:
                  if not updated_values.get(field):
-                      messagebox.showerror("Lỗi", f"Trường '{field_title_map.get(field, field)}' không được để trống.")
+                      # Check if the main window still exists before showing messagebox
+                      if self.winfo_exists():
+                           messagebox.showerror("Lỗi", f"Trường '{field_title_map.get(field, field)}' không được để trống.")
                       return
 
             # Validate dates are in YYYY-MM-DD format if not empty
@@ -536,7 +658,9 @@ class Customer(tk.Frame):
                       try:
                            datetime.strptime(date_str, "%Y-%m-%d")
                       except ValueError:
-                           messagebox.showerror("Lỗi định dạng ngày", f"Trường '{field_title_map.get(field, field)}' có định dạng không hợp lệ. Vui lòng dùng YYYY-MM-DD.")
+                           # Check if the main window still exists before showing messagebox
+                           if self.winfo_exists():
+                                messagebox.showerror("Lỗi định dạng ngày", f"Trường '{field_title_map.get(field, field)}' có định dạng không hợp lệ. Vui lòng dùng YYYY-MM-DD.")
                            return
 
             # Check if the chosen room number is now occupied by a *different* customer
@@ -551,7 +675,9 @@ class Customer(tk.Frame):
                            occupied_rooms_by_others.add(str(room_num)) # Ensure string
 
             if chosen_room in occupied_rooms_by_others:
-                 messagebox.showerror("Lỗi", f"Số phòng {chosen_room} đã có khách khác thuê.")
+                 # Check if the main window still exists before showing messagebox
+                 if self.winfo_exists():
+                      messagebox.showerror("Lỗi", f"Số phòng {chosen_room} đã có khách khác thuê.")
                  return
 
 
@@ -564,7 +690,9 @@ class Customer(tk.Frame):
                       break
 
             if original_customer_index == -1:
-                 messagebox.showerror("Lỗi dữ liệu", "Không tìm thấy khách hàng gốc trong danh sách.")
+                 # Check if the main window still exists before showing messagebox
+                 if self.winfo_exists():
+                      messagebox.showerror("Lỗi dữ liệu", "Không tìm thấy khách hàng gốc trong danh sách.")
                  return
 
             # Create an updated CustomerInfo object (passing YYYY-MM-DD strings or empty strings)
@@ -573,11 +701,11 @@ class Customer(tk.Frame):
                  name=updated_values.get('name'),
                  sex=updated_values.get('sex'),
                  birthday=updated_values.get('birthday'), # Store as YYYY-MM-DD string
-                 national=updated_values.get('national'), # Use nationality
+                 national=updated_values.get('national'),
                  country=updated_values.get('country'),
                  checkin_date=updated_values.get('checkin_date'), # Store as YYYY-MM-DD string
                  room_type=updated_values.get('room_type'),
-                 room_number=updated_values.get('room_number') # Store the selected room number string
+                 room_number=updated_values.get('room_number')
             )
 
 
@@ -590,8 +718,16 @@ class Customer(tk.Frame):
 
             # Update database
             try:
-                self.db_conn.updateCustomerInDatabase(updated_customer_info) # Expects CustomerInfo with YYYY-MM-DD strings
-                messagebox.showinfo("Thành công", f"Đã cập nhật thông tin khách hàng {updated_customer_info.id}.")
+                if self.db_conn: # Check if db_conn is available
+                    self.db_conn.updateCustomerInDatabase(updated_customer_info) # Expects CustomerInfo with YYYY-MM-DD strings
+                    # Check if the main window still exists before showing messagebox
+                    if self.winfo_exists():
+                         messagebox.showinfo("Thành công", f"Đã cập nhật thông tin khách hàng {updated_customer_info.id}.")
+                else:
+                    print("[!] Database connection not available. Cannot update customer in DB.")
+                    if self.winfo_exists():
+                         messagebox.showwarning("Lỗi Database", "Không có kết nối database. Không thể cập nhật khách hàng.")
+
                 edit_window.destroy()
 
                 # Call the refresh callback after updating a customer
@@ -599,12 +735,16 @@ class Customer(tk.Frame):
                      self.refresh_room_management_callback()
 
             except Exception as e:
-                messagebox.showerror("Lỗi Database", f"Không thể cập nhật khách hàng trong database:\n{e}")
+                print(f"[!] Database error during update customer: {e}") # Print error to console for debugging
+                # Check if the main window still exists before showing messagebox
+                if self.winfo_exists():
+                     messagebox.showerror("Lỗi Database", f"Không thể cập nhật khách hàng trong database:\n{e}")
                 # Optional: revert change in self.customer_list/treeview if DB fails?
 
 
         button_frame_bottom = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
-        button_frame_bottom.grid(row=len(edit_fields_and_titles), column=0, columnspan=3, pady=10)
+        # Placed below capture button frame in edit window
+        button_frame_bottom.grid(row=len(edit_fields_and_titles) + 1, column=0, columnspan=3, pady=(5, 0))
         button_frame_bottom.columnconfigure(0, weight=1)
 
         save_btn = tk.Button(button_frame_bottom, text="LƯU THAY ĐỔI", command=save_changes,
@@ -618,12 +758,15 @@ class Customer(tk.Frame):
     def remove_customer(self):
         selected_item_ids = self.tree.selection()
         if not selected_item_ids:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để xóa")
+            # Check if the main window still exists before showing messagebox
+            if self.winfo_exists():
+                 messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để xóa")
             return
 
         customer_ids_to_remove = selected_item_ids # iids are customer ID strings
 
-        if messagebox.askyesno("Xác nhận xóa", f"Bạn có chắc chắn muốn xóa {len(customer_ids_to_remove)} khách hàng đã chọn?"):
+        # Check if the main window still exists before showing messagebox before asking yesno
+        if self.winfo_exists() and messagebox.askyesno("Xác nhận xóa", f"Bạn có chắc chắn muốn xóa {len(customer_ids_to_remove)} khách hàng đã chọn?"):
              removed_count = 0
              db_error_count = 0
              for customer_id in customer_ids_to_remove:
@@ -638,68 +781,73 @@ class Customer(tk.Frame):
 
                       # Remove from database
                       try:
-                         self.db_conn.removeCustomerFromDatabase(customer_id) # Expects string ID
+                         if self.db_conn: # Check if db_conn is available
+                             self.db_conn.removeCustomerFromDatabase(customer_id) # Expects string ID
+                         else:
+                             print("[!] Database connection not available. Cannot remove customer from DB.")
+                             # Don't increment db_error_count for no connection, only for DB errors
                       except Exception as e:
                          print(f"Error removing customer {customer_id} from database: {e}")
                          db_error_count += 1
 
              if removed_count > 0:
-                  messagebox.showinfo("Thành công", f"Đã xóa {removed_count} khách hàng.")
-                  if db_error_count > 0:
-                       messagebox.showwarning("Cảnh báo Database", f"Không thể xóa {db_error_count} khách hàng khỏi database.")
+                  # Check if the main window still exists before showing messagebox
+                  if self.winfo_exists():
+                       messagebox.showinfo("Thành công", f"Đã xóa {removed_count} khách hàng.")
+                       if db_error_count > 0:
+                            messagebox.showwarning("Cảnh báo Database", f"Không thể xóa {db_error_count} khách hàng khỏi database.")
 
                   # Call the refresh callback after removing a customer
                   if self.refresh_room_management_callback:
                        self.refresh_room_management_callback()
 
              else:
-                  messagebox.showwarning("Thông tin", "Không tìm thấy khách hàng phù hợp trong danh sách để xóa.")
+                  # Check if the main window still exists before showing messagebox
+                  if self.winfo_exists():
+                       messagebox.showwarning("Thông tin", "Không tìm thấy khách hàng phù hợp trong danh sách để xóa.")
 
 
-    # --- sent_data_to_checkout method (UPDATED to pass CustomerInfo object) ---
+    # --- sent_data_to_checkout method (Refactored to pass CustomerInfo object) ---
     def sent_data_to_checkout(self):
         selected_item_id = self.tree.selection()
 
-        if selected_item_id:
-             # Find the customer object in the list using the selected iid (Customer ID string)
-             customer_id_to_checkout = selected_item_id[0]
-             customer_to_checkout = None
-             for customer in self.customer_list:
-                  # Compare string IDs
-                  if str(getattr(customer, 'id', None)) == customer_id_to_checkout:
-                      customer_to_checkout = customer
-                      break
+        if not selected_item_id:
+            # Check if the main window still exists before showing messagebox
+            if self.winfo_exists():
+                 messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để thanh toán.")
+            return
 
-             if customer_to_checkout:
-                  # Pass the CustomerInfo object directly to the controller
-                  # The controller (App instance) should have an attribute to receive this object
-                  # Assuming self.controller is the App instance and has a customer_information_temp attribute
-                  try:
-                      # Update the customer_information_temp object in the App
-                      # Copy attributes from the selected customer object
-                      self.controller.customer_information_temp.id = getattr(customer_to_checkout, 'id', None)
-                      self.controller.customer_information_temp.name = getattr(customer_to_checkout, 'name', None)
-                      self.controller.customer_information_temp.sex = getattr(customer_to_checkout, 'sex', None)
-                      self.controller.customer_information_temp.birthday = getattr(customer_to_checkout, 'birthday', None) # Should be YYYY-MM-DD string or None
-                      self.controller.customer_information_temp.national = getattr(customer_to_checkout, 'national', None) # Use nationality
-                      self.controller.customer_information_temp.country = getattr(customer_to_checkout, 'country', None)
-                      self.controller.customer_information_temp.checkin_date = getattr(customer_to_checkout, 'checkin_date', None) # Should be YYYY-MM-DD string or None
-                      self.controller.customer_information_temp.room_type = getattr(customer_to_checkout, 'room_type', None)
-                      self.controller.customer_information_temp.room_number = getattr(customer_to_checkout, 'room_number', None)
+        # Find the customer object in the list using the selected iid (Customer ID string)
+        customer_id_to_checkout = selected_item_id[0]
+        customer_to_checkout = None
+        for customer in self.customer_list:
+             # Compare string IDs
+             if str(getattr(customer, 'id', None)) == customer_id_to_checkout:
+                 customer_to_checkout = customer
+                 break
 
-                      # print("Data sent to controller:", self.controller.customer_information_temp.__dict__) # Debugging
-
-                      # Switch to the Checkout tab
-                      self.show_tab("Thanh Toán")
-
-                  except AttributeError as e:
-                       messagebox.showerror("Lỗi dữ liệu", f"Đối tượng xử lý thanh toán không có thuộc tính cần thiết:\n{e}\nĐảm bảo controller (App) có thuộc tính customer_information_temp với các thuộc tính con.")
-                  except Exception as e:
-                       messagebox.showerror("Lỗi", f"Đã xảy ra lỗi khi chuẩn bị dữ liệu thanh toán: {e}")
+        if customer_to_checkout:
+             try:
+                 # Pass the selected CustomerInfo object to the controller (App)
+                 # Assuming App has a method like 'set_customer_for_checkout'
+                 if hasattr(self.controller, 'set_current_customer_for_checkout'):
+                     self.controller.set_current_customer_for_checkout(customer_to_checkout)
+                     print(f"[*] Passed CustomerInfo object for ID {getattr(customer_to_checkout, 'id', 'N/A')} to controller for checkout.")
+                     self.show_tab("Thanh Toán") # Switch to checkout tab
+                 else:
+                      print("[!] Controller (App) does not have 'set_current_customer_for_checkout' method.")
+                      if self.winfo_exists(): # Check if main window still exists
+                           messagebox.showerror("Lỗi cấu hình", "Ứng dụng không được cấu hình đúng để xử lý thanh toán. Thiếu phương thức xử lý khách hàng.")
 
 
-             else:
-                  messagebox.showwarning("Lỗi dữ liệu", f"Không tìm thấy dữ liệu khách hàng với ID {customer_id_to_checkout} trong danh sách.")
+             except Exception as e:
+                  print(f"[!] Unexpected error in sent_data_to_checkout: {e}") # Print error to console for debugging
+                  if self.winfo_exists(): # Check if main window still exists
+                       messagebox.showerror("Lỗi", f"Đã xảy ra lỗi không mong muốn khi chuẩn bị dữ liệu thanh toán: {e}")
+
 
         else:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng để thanh toán.")
+             # Check if the main window still exists before showing messagebox
+             if self.winfo_exists():
+                  messagebox.showwarning("Lỗi dữ liệu", f"Không tìm thấy dữ liệu khách hàng với ID {customer_id_to_checkout} trong danh sách.")
+

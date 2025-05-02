@@ -1,35 +1,31 @@
 import tkinter as tk
 from tkinter import messagebox
-import mysql.connector # Assuming you use mysql.connector
-
-# Import your tab classes
-from view.camera import Camera # Assuming Camera is in view/camera.py
-from view.checkout import Checkout # Assuming Checkout is in view/checkout.py
-from view.customer import Customer # Assuming Customer is in view/customer.py
-from view.revenue import Revenue # Assuming Revenue is in view/revenue.py
-from view.room_management import RoomManagement # Assuming RoomManagement is in view/room_management.py
-from view.staff_management import StaffManagement # Assuming StaffManagement is in view/staff_management.py
-from view.revenue_chart import RevenueChart # Assuming RevenueChart is in view/revenue_chart.py
-from view.login_page import LoginPage # Import the LoginPage
-
-# Import your models
-from view.models import CustomerInfo, RevenueData # Assuming models are in view/models.py
-
-# Import your database connector
-from view.db.database import DB_Connector # Assuming DB_Connector is in view/db/database.py
-
-import cv2 # Import cv2 for camera cleanup
+import mysql.connector
 import time # Import time for delay in cleanup
 import os # Import os for forced exit (if needed)
-from typing import Callable # Import Callable for type hinting
+from typing import Callable, List # Import Callable and List for type hinting
 
+# Import your tab classes
+from view.camera import Camera
+from view.checkout import Checkout
+from view.customer import Customer
+from view.login_page import LoginPage
+from view.revenue import Revenue
+from view.models import CustomerInfo, RevenueData, StaffInfo # Ensure necessary models are imported
+from view.room_management import RoomManagement
+from view.staff_management import StaffManagement
+from view.revenue_chart import RevenueChart
+from view.db.database import DB_Connector
+
+import cv2 # Import cv2 at the top level
 
 # Flag to control forced exit (Use with caution, only if clean exit fails)
 FORCE_EXIT_ON_CLOSE = False # Keep False by default
 
 
 class App(tk.Tk):
-    def __init__(self):
+    # Initialize with data lists (loaded in main) and db_conn
+    def __init__(self, customer_list: List[CustomerInfo], staff_list: List[StaffInfo], revenue_list: List[RevenueData], db_conn: DB_Connector):
         super().__init__()
         self.is_fullscreen = False
         self.title("Quản Lí Nhà Trọ")
@@ -38,38 +34,24 @@ class App(tk.Tk):
         self.bind("<F11>", self.toggle_fullscreen)
 
         # --- Database Connection ---
-        self.db_conn = None
-        try:
-            self.db_conn = DB_Connector()
-            print("[*] Database connection established.")
-        except mysql.connector.Error as e:
-            print(f"[!] Database connection error: {e}")
-            messagebox.showerror("Database Error", "Không thể kết nối tới MySQL. Vui lòng kiểm tra kết nối và thử lại.")
-            # Decide how to handle DB connection failure: exit, or run with limited functionality
-            # For now, we'll allow the app to start but DB operations will fail.
-            self.db_conn = None # Ensure db_conn is None if connection failed
-        except Exception as e:
-            print(f"[!] An unexpected error occurred during DB connection: {e}")
-            messagebox.showerror("Application Error", f"Đã xảy ra lỗi không mong muốn khi kết nối DB: {e}")
-            self.db_conn = None
-
-
-        # --- Central Data Lists (Loaded from DB or initialized empty) ---
-        self.customer_list = []
-        self.staff_list = []
-        self.revenue_list = [] # This is the main list holding RevenueData objects
-
-        # Load initial data if DB connection was successful
+        # Store the DB_Connector instance passed from main
+        self.db_conn = db_conn
         if self.db_conn:
-            try:
-                self.customer_list = self.db_conn.getCustomersFromDatabase() # Assuming this method exists
-                self.staff_list = self.db_conn.getStaffsFromDatabase()     # Assuming this method exists
-                self.revenue_list = self.db_conn.getRevenueFromDatabase()   # Assuming this method exists
-                print(f"[*] Loaded {len(self.customer_list)} customers, {len(self.staff_list)} staffs, {len(self.revenue_list)} revenue records from DB.")
-            except Exception as e:
-                print(f"[!] Error loading initial data from DB: {e}")
-                messagebox.showwarning("Database Load Error", f"Không thể tải dữ liệu ban đầu từ DB: {e}")
-                # Data lists will remain empty
+             print("[*] App initialized with database connection.")
+        else:
+             print("[!] App initialized without a valid database connection.")
+
+
+        # --- Central Data Lists (Passed from main) ---
+        self.customer_list = customer_list
+        self.staff_list = staff_list
+        self.revenue_list = revenue_list # This is the main list holding RevenueData objects
+        print(f"[*] App received {len(self.customer_list)} customers, {len(self.staff_list)} staffs, {len(self.revenue_list)} revenue records.")
+
+
+        # --- Data for Checkout Tab ---
+        # This attribute will hold the CustomerInfo object selected by the user for checkout
+        self.current_customer_for_checkout: CustomerInfo | None = None
 
 
         # --- App bar (initially hidden, shown after login) ---
@@ -88,41 +70,17 @@ class App(tk.Tk):
         # --- Button frame for tabs (initially hidden, shown after login) ---
         self.button_frame = tk.Frame(self.appbar, bg="#3B82F6")
         self.buttons = [] # To store tab buttons
-        self.button_frame.pack(side="right")
         # self.button_frame.pack(side="right") # Don't pack initially
 
 
         # --- Tab Instances (initialized but not packed until show_main) ---
         self.tabs = {} # Dictionary to hold tab instances
 
-        # CustomerInfo object to pass data to Checkout (assuming Customer tab updates this)
-        self.customer_information_temp = CustomerInfo() # This will hold data of the customer selected for checkout
-
         # Initialize tab instances. Pass necessary data and callbacks.
         # Camera tab needs parent (self)
-        self.camera_tab = Camera(self) # Assuming Camera.__init__ takes parent
+        self.camera_tab: Camera | None = None # Initialize as None, created in show_main
 
-        # Checkout tab needs parent (self), the customer_information_temp object,
-        # the callback method to receive finalized revenue data, and db_conn
-        self.checkout_tab = Checkout(self, self.customer_information_temp, self.add_revenue_record_callback, self.db_conn)
-
-        # Revenue tab needs parent (self), the central revenue_list, and the db_conn
-        self.revenue_tab = Revenue(self, self.revenue_list, self.db_conn)
-
-        # Other tabs (assuming they need parent, data lists, db_conn, show_tab callback)
-        # Pass the show_tab method to Customer tab so it can switch tabs
-        # Pass the new refresh_room_management_callback to the Customer tab
-        # CORRECTED LINE: Added self.refresh_room_management_callback as the last argument
-        self.customer_tab = Customer(self, self.show_tab, self.customer_information_temp, self.customer_list, self.db_conn, self.refresh_room_management_callback)
-
-        # Room Management tab needs parent and the customer_list
-        self.room_management_tab = RoomManagement(self, self.customer_list) # Assuming it needs customer_list
-
-        self.staff_management_tab = StaffManagement(self, self.staff_list, self.db_conn) # Assuming it needs staff_list and db_conn
-        self.revenue_chart_tab = RevenueChart(self, self.customer_list) # Assuming it needs customer_list
-
-
-        # --- Login Page ---
+        # Login Page - Initialize first and pack
         # Initialize Login page, passing the show_main method as the success callback
         self.login_frame = LoginPage(self, self.show_main, self.staff_list)
         # Pack the login frame first so it's the initial view
@@ -141,6 +99,76 @@ class App(tk.Tk):
         self.is_fullscreen = not self.is_fullscreen
         self.attributes("-fullscreen", self.is_fullscreen)
 
+    # --- Method to set the current customer for checkout (Called by Customer tab) ---
+    def set_current_customer_for_checkout(self, customer: CustomerInfo):
+        """Stores the selected customer data for the Checkout tab."""
+        self.current_customer_for_checkout = customer
+        print(f"[*] App received customer ID {getattr(customer, 'id', 'N/A')} for checkout.")
+
+
+    # --- Callback method to add a revenue record (Called by Checkout tab) ---
+    def add_revenue_record_callback(self, revenue_data: RevenueData) -> None:
+        """
+        Callback method provided to the Checkout tab to add a new revenue record.
+        This method is called by the Checkout tab when a checkout is finalized.
+        """
+        print(f"[*] App received new revenue record from Checkout: {revenue_data}")
+        # Add the new record to the central revenue list managed by the App
+        if isinstance(revenue_data, RevenueData):
+            self.revenue_list.append(revenue_data)
+            print("[✓] Added record to central revenue_list in App.")
+
+            # --- Optional: Save to Database ---
+            # You would typically save the new record to the database here
+            if self.db_conn:
+                try:
+                    # Assuming DB_Connector has a method to save revenue data
+                    # Replace with your actual method name and parameters
+                    # self.db_conn.save_revenue(revenue_data)
+                    print("[*] Database save logic for new revenue record would go here.")
+                except Exception as e:
+                    print(f"[!] Error saving new revenue record to database: {e}")
+                    # Check if the main window still exists before showing messagebox
+                    if self.winfo_exists():
+                         messagebox.showerror("Database Save Error", f"Could not save revenue record: {e}")
+
+
+            # Tell the Revenue tab to refresh its display to include the new record
+            # Check if the tab instance exists before calling the method
+            if hasattr(self, 'revenue_tab') and self.revenue_tab and hasattr(self.revenue_tab, 'refresh_display'):
+                 print("[*] Signaling Revenue tab to refresh display.")
+                 self.revenue_tab.refresh_display()
+            else:
+                 print("[!] Revenue tab instance or refresh_display method not found.")
+
+            # --- Clear the current customer data after successful checkout ---
+            self.current_customer_for_checkout = None
+            print("[*] Cleared current customer data in App after checkout.")
+
+        else:
+            print("[!] Received non-RevenueData object in add_revenue_record_callback.")
+            # Check if the main window still exists before showing messagebox
+            if self.winfo_exists():
+                 messagebox.showwarning("Lỗi dữ liệu", "Đã nhận dữ liệu doanh thu không hợp lệ.")
+
+
+    # --- New Callback for refreshing Room Management tab ---
+    def refresh_room_management_callback(self) -> None:
+        """
+        Callback method called by the Customer tab when customer data that affects
+        room occupancy is changed (added, edited, removed).
+        This method signals the Room Management tab to refresh its display.
+        """
+        print("[*] App received signal to refresh Room Management tab.")
+        # Check if the tab instance exists before calling the method
+        if hasattr(self, 'room_management_tab') and self.room_management_tab and hasattr(self.room_management_tab, 'refresh_display'):
+             print("[*] Signaling Room Management tab to refresh display.")
+             self.room_management_tab.refresh_display()
+        else:
+             print("[!] Room Management tab instance or refresh_display method not found.")
+    # --- End New Callback ---
+
+
     def show_main(self):
         """Called after successful login to set up and display the main application UI."""
         print("[*] Login successful. Setting up main application UI.")
@@ -149,13 +177,40 @@ class App(tk.Tk):
 
         # Pack the app bar and button frame
         self.appbar.pack(fill="x")
+        self.button_frame.pack(side="right") # Pack the button frame here
+
+        # Initialize other tabs now that login is complete and DB is connected (handled in main)
+        # Pass 'self' as the controller to tabs that need to interact with App data/methods
+        # Pass callbacks where needed
+
+        # Initialize Camera tab (needs parent)
+        self.camera_tab = Camera(self) # Now initialized here after login
+
+        # Initialize Checkout tab (needs parent, controller=self, and revenue_callback)
+        self.checkout_tab = Checkout(self, self, self.add_revenue_record_callback)
+
+        # Initialize Customer tab (needs parent, show_tab, controller=self, customer_list, db_conn, refresh_room_management_callback)
+        self.customer_tab = Customer(self, self.show_tab, self, self.customer_list, self.db_conn, self.refresh_room_management_callback)
+
+        # Initialize Revenue tab (needs parent, revenue_list, db_conn)
+        self.revenue_tab = Revenue(self, self.revenue_list, self.db_conn)
+
+        # Initialize Room Management tab (needs parent, customer_list)
+        self.room_management_tab = RoomManagement(self, self.customer_list)
+
+        # Initialize Staff Management tab (needs parent, staff_list, db_conn)
+        self.staff_management_tab = StaffManagement(self, self.staff_list, self.db_conn)
+
+        # Initialize Revenue Chart tab (needs parent, customer_list - assuming)
+        self.revenue_chart_tab = RevenueChart(self, self.customer_list)
+
 
         # Populate the tabs dictionary now that login is complete
         self.tabs = {
             "Camera": self.camera_tab,
             "Thanh Toán": self.checkout_tab,
-            "Doanh thu": self.revenue_tab,
             "Danh Sách Thuê": self.customer_tab,
+            "Doanh thu": self.revenue_tab,
             "Quản Lý Phòng": self.room_management_tab,
             "Quản Lý Nhân Viên": self.staff_management_tab,
             "Biểu Đồ Doanh Thu": self.revenue_chart_tab,
@@ -180,8 +235,7 @@ class App(tk.Tk):
             btn.pack(side="left", padx=5)
             self.buttons.append(btn)
 
-        # Show the first tab after login (e.g., Camera)
-        self.show_tab("Camera")
+        self.show_tab("Camera") # show first tab by default
         print("[✓] Main application UI setup complete.")
 
 
@@ -199,73 +253,24 @@ class App(tk.Tk):
 
             # --- Trigger refresh for specific tabs when shown ---
             # If switching to Checkout, load the current customer data
-            if tab_name == "Thanh Toán" and hasattr(self.checkout_tab, 'refresh_display'):
+            # Check if the tab instance exists before calling the method
+            if tab_name == "Thanh Toán" and hasattr(self, 'checkout_tab') and self.checkout_tab and hasattr(self.checkout_tab, 'refresh_display'):
                  print("[*] Showing Checkout tab, refreshing display.")
                  self.checkout_tab.refresh_display() # Call refresh on Checkout
 
             # If switching to Revenue, refresh its display from the central list
-            elif tab_name == "Doanh thu" and hasattr(self.revenue_tab, 'refresh_display'):
+            # Check if the tab instance exists before calling the method
+            elif tab_name == "Doanh thu" and hasattr(self, 'revenue_tab') and self.revenue_tab and hasattr(self.revenue_tab, 'refresh_display'):
                  print("[*] Showing Revenue tab, refreshing display.")
                  self.revenue_tab.refresh_display() # Call refresh on Revenue
 
             # If switching to Room Management, refresh its display
-            elif tab_name == "Quản Lý Phòng" and hasattr(self.room_management_tab, 'refresh_display'):
+            # Check if the tab instance exists before calling the method
+            elif tab_name == "Quản Lý Phòng" and hasattr(self, 'room_management_tab') and self.room_management_tab and hasattr(self.room_management_tab, 'refresh_display'):
                  print("[*] Showing Room Management tab, refreshing display.")
                  self.room_management_tab.refresh_display() # Call refresh on Room Management
 
-
             # Add similar logic for other tabs that need refresh when shown
-
-
-    def add_revenue_record_callback(self, revenue_data: RevenueData) -> None:
-        """
-        Callback method provided to the Checkout tab to add a new revenue record.
-        This method is called by the Checkout tab when a checkout is finalized.
-        """
-        print(f"[*] App received new revenue record from Checkout: {revenue_data}")
-        # Add the new record to the central revenue list managed by the App
-        if isinstance(revenue_data, RevenueData):
-            self.revenue_list.append(revenue_data)
-            print("[✓] Added record to central revenue_list in App.")
-
-            # --- Optional: Save to Database ---
-            # You would typically save the new record to the database here
-            if self.db_conn:
-                try:
-                    # Assuming DB_Connector has a method to save revenue data
-                    # Replace with your actual method name and parameters
-                    # self.db_conn.save_revenue(revenue_data)
-                    print("[*] Database save logic for new revenue record would go here.")
-                except Exception as e:
-                    print(f"[!] Error saving new revenue record to database: {e}")
-                    messagebox.showerror("Database Save Error", f"Could not save revenue record: {e}")
-
-
-            # Tell the Revenue tab to refresh its display to include the new record
-            if hasattr(self.revenue_tab, 'refresh_display'):
-                 print("[*] Signaling Revenue tab to refresh display.")
-                 self.revenue_tab.refresh_display()
-            else:
-                 print("[!] Revenue tab instance or refresh_display method not found.")
-
-        else:
-            print("[!] Received non-RevenueData object in add_revenue_record_callback.")
-
-
-    # --- New Callback for refreshing Room Management tab ---
-    def refresh_room_management_callback(self) -> None:
-        """
-        Callback method called by the Customer tab when customer data that affects
-        room occupancy is changed (added, edited, removed).
-        This method signals the Room Management tab to refresh its display.
-        """
-        print("[*] App received signal to refresh Room Management tab.")
-        if hasattr(self.room_management_tab, 'refresh_display'):
-             print("[*] Signaling Room Management tab to refresh display.")
-             self.room_management_tab.refresh_display()
-        else:
-             print("[!] Room Management tab instance or refresh_display method not found.")
-    # --- End New Callback ---
 
 
     def on_closing(self):
@@ -274,9 +279,13 @@ class App(tk.Tk):
 
         # 1. Signal camera tab to stop its loop and release capture
         # This should also cancel Tkinter 'after' calls within the Camera tab
+        # Add checks to ensure the tab instance and stop_camera method exist
         if hasattr(self, 'camera_tab') and self.camera_tab and hasattr(self.camera_tab, 'stop_camera'):
-            self.camera_tab.stop_camera()
-            print("[*] Camera stop signal sent.")
+            try:
+                self.camera_tab.stop_camera()
+                print("[*] Camera stop signal sent and processed.")
+            except Exception as e:
+                print(f"[!] Error calling camera_tab.stop_camera(): {e}")
         else:
             print("[!] Camera tab instance or stop_camera method not found during closing.")
 
@@ -292,21 +301,29 @@ class App(tk.Tk):
 
         # 3. Add a small delay to allow resources to be released by the OS/libraries
         # Keeping the delay, might help with resource finalization
-        time.sleep(0.5) # Sleep for 500 milliseconds
+        time.sleep(0.1) # Reduced delay slightly
+
 
         # 4. Close database connection if it's open
-        if hasattr(self, 'db_conn') and self.db_conn:
-             try:
-                 # Assuming this method closes the connection
-                 self.db_conn.closeBuffer()
-                 print("[✓] Database connection closed.")
-             except Exception as e:
-                 print(f"[!] Error closing database connection: {e}")
+        # The DB_Connector is now closed in the main function's finally block
+        # if hasattr(self, 'db_conn') and self.db_conn:
+        #      try:
+        #          # Assuming this method closes the connection
+        #          self.db_conn.closeBuffer()
+        #          print("[✓] Database connection closed.")
+        #      except Exception as e:
+        #          print(f"[!] Error closing database connection: {e}")
+        print("[*] Database connection closure is handled in main function.")
+
 
         # 5. Destroy the Tkinter window, which stops the mainloop
         try:
-            self.destroy()
-            print("[✓] Tkinter window destroyed.")
+            # Check if the window still exists before destroying
+            if self.winfo_exists():
+                 self.destroy()
+                 print("[✓] Tkinter window destroyed.")
+            else:
+                 print("[*] Tkinter window already destroyed.")
         except Exception as e:
              print(f"[!] Error destroying Tkinter window: {e}")
 
@@ -317,3 +334,6 @@ class App(tk.Tk):
             os._exit(0) # This will terminate the process immediately
 
         print("[*] Application shutdown sequence finished.")
+        # The process should exit naturally now if all resources are released.
+
+
