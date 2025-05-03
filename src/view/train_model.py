@@ -1,4 +1,5 @@
 import os
+import threading
 import numpy as np
 from PIL import Image
 IMAGE_SIZE = (100, 100)
@@ -39,6 +40,23 @@ def project_face(face, mean_face, eigvecs, num_components=10):
     face_diff = face.reshape(-1, 1) - mean_face
     projection = np.dot(eigvecs[:, :num_components].T, face_diff)
     return projection
+
+# train model after capture new customer image
+def train_model_thread():
+    try:
+        X, y, label_map = load_images("dataset")
+        mean_face, eigvecs, A = train_eigenfaces(X)
+        np.save("mean_face.npy", mean_face)
+        np.save("eigvecs.npy", eigvecs)
+        np.save("X_projected.npy", np.dot(eigvecs.T, A))
+        np.save("labels.npy", y)
+        print("Training completed!")
+    except Exception as e:
+        print("Training failed:", e)
+
+# split thread for training dataset
+def start_training():
+    threading.Thread(target=train_model_thread, daemon=True).start()
 
 dataset_path = "dataset"
 X, y, label_map = load_images(dataset_path)

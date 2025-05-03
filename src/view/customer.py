@@ -6,7 +6,9 @@ from view.models import CustomerInfo
 # from database import DB_Connector
 from tkcalendar import Calendar
 from view.db.database import DB_Connector
-from typing import Callable, List # Import Callable and List for type hinting
+from typing import Callable, List
+
+from view.train_model import start_training # Import Callable and List for type hinting
 
 # Import the new utility function for capturing images
 # Make sure to create src/view/utils.py and implement capture_customer_image there
@@ -325,12 +327,14 @@ class Customer(tk.Frame):
         def on_capture_click():
             """Handles the click event for the Capture Image button."""
             # Get name from the 'name' entry widget safely
-            name_entry_widget = entries.get('name')
-            customer_name = name_entry_widget.get().strip() if name_entry_widget else ""
+            # name_entry_widget = entries.get('name')
+            id_entry_widget = entries.get('id')
+            # customer_name = name_entry_widget.get().strip() if name_entry_widget else ""
+            customer_id = id_entry_widget.get().strip() if id_entry_widget else ""
 
-            if not customer_name:
+            if not customer_id:
                 if self.winfo_exists(): # Check if main window still exists
-                    messagebox.showwarning("Cảnh báo", "Vui lòng nhập Tên khách hàng trước khi chụp ảnh.")
+                    messagebox.showwarning("Cảnh báo", "Vui lòng nhập ID khách hàng trước khi chụp ảnh.")
                 return
 
             if not CAPTURE_AVAILABLE:
@@ -340,15 +344,18 @@ class Customer(tk.Frame):
 
             # Call the external capture function
             # This function should handle opening the camera, capturing, and saving
-            print(f"[*] Attempting to capture image for customer: {customer_name}")
-            success = capture_customer_image(customer_name) # Call the utility function
+            print(f"[*] Attempting to capture image for customer: {customer_id}")
+            success = capture_customer_image(str(customer_id)) # Call the utility function
 
             if success:
                 if self.winfo_exists(): # Check if main window still exists
-                    messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_name}'.")
+                    messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_id}'.")
+
+                    # train dataset after add new image
+                    start_training()
             else:
                 if self.winfo_exists(): # Check if main window still exists
-                    messagebox.showwarning("Thất bại", f"Không thể chụp hoặc lưu ảnh cho khách hàng '{customer_name}'. Vui lòng kiểm tra camera và quyền truy cập.")
+                    messagebox.showwarning("Thất bại", f"Không thể chụp hoặc lưu ảnh cho khách hàng '{customer_id}'. Vui lòng kiểm tra camera và quyền truy cập.")
 
 
         capture_btn = tk.Button(
