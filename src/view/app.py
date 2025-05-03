@@ -187,7 +187,7 @@ class App(tk.Tk):
         self.camera_tab = Camera(self) # Now initialized here after login
 
         # Initialize Checkout tab (needs parent, controller=self, and revenue_callback)
-        self.checkout_tab = Checkout(self, self, self.add_revenue_record_callback)
+        self.checkout_tab = Checkout(self, self, self.add_revenue_record_callback,self.db_conn)
 
         # Initialize Customer tab (needs parent, show_tab, controller=self, customer_list, db_conn, refresh_room_management_callback)
         self.customer_tab = Customer(self, self.show_tab, self, self.customer_list, self.db_conn, self.refresh_room_management_callback)

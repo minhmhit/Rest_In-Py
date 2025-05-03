@@ -10,13 +10,12 @@ from typing import Callable, List # Import Callable and List for type hinting
 
 # Import the new utility function for capturing images
 # Make sure to create src/view/utils.py and implement capture_customer_image there
-# try:
-#     from view.utils import capture_customer_image
-#     CAPTURE_AVAILABLE = True
-# except ImportError:
-#     print("Warning: src/view/utils.py or capture_customer_image function not found. Image capture will be disabled.")
-#     CAPTURE_AVAILABLE = False
-
+try:
+    from view.utils import capture_customer_image
+    CAPTURE_AVAILABLE = True
+except ImportError:
+    print("Warning: src/view/utils.py or capture_customer_image function not found. Image capture will be disabled.")
+    CAPTURE_AVAILABLE = False
 
 # --- Define colors --- (Keep consistent with Checkout)
 COLOR_PRIMARY_BLUE = "#3B82F6"

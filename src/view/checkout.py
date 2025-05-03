@@ -6,6 +6,7 @@ import locale
 from typing import Callable # Import Callable for type hinting
 
 # Assume CustomerInfo and RevenueData are imported
+from view.db.database import DB_Connector
 from view.models import CustomerInfo, RevenueData # Ensure RevenueData is imported
 
 # Import python-docx
@@ -51,12 +52,13 @@ if 'format_currency' not in locals():
 class Checkout(tk.Frame):
     # Added revenue_callback parameter to send finalized revenue data back to App
     # controller is the App instance
-    def __init__(self, parent, controller, revenue_callback: Callable[[RevenueData], None]):
+    def __init__(self, parent, controller, revenue_callback: Callable[[RevenueData], None], db_conn: DB_Connector):
         super().__init__(parent, bg=COLOR_BACKGROUND_LIGHT)
         # Store the App instance as the controller
         self.controller = controller
         # Store the callback to send revenue data back to the App
         self.revenue_callback = revenue_callback
+        self.db_conn = db_conn
 
         self.price_per_day = {"VIP": 400000, "Thường": 250000} # Use "Thường" as in customer tab
 
@@ -349,14 +351,6 @@ class Checkout(tk.Frame):
 
     # --- finalize_checkout method (New method to create RevenueData and send back) ---
     def finalize_checkout(self):
-        """
-        Collects calculated data, creates a RevenueData object, and calls
-        the revenue_callback to send it back to the App.
-        """
-        # Ensure calculations have been performed
-        # You might want to add a check here if load_and_calculate hasn't been called
-        # For simplicity, we assume load_and_calculate is called before finalizing
-
         customer_data = getattr(self.controller, 'current_customer_for_checkout', None)
 
         if not customer_data:
@@ -423,6 +417,9 @@ class Checkout(tk.Frame):
                 # This should be handled by the App's revenue_callback
                 # Assuming the App's callback will set self.current_customer_for_checkout = None
                 print("[*] Assuming App's revenue_callback handles clearing current customer data.")
+
+                # save revenue to database
+                self.db_conn.setRevenueToDatabase(revenue_record)
 
                 # Clear the display in the Checkout tab
                 self.clear_display()
