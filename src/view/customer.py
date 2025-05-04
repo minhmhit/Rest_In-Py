@@ -348,11 +348,15 @@ class Customer(tk.Frame):
             success = capture_customer_image(str(customer_id)) # Call the utility function
 
             if success:
-                if self.winfo_exists(): # Check if main window still exists
-                    messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_id}'.")
-
-                    # train dataset after add new image
-                    start_training()
+                messagebox.showinfo("Thông báo", f"Đã chụp và lưu ảnh cho khách hàng '{customer_id}'")
+                import os
+                dataset_path_to_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dataset")
+                start_training(dataset_path=dataset_path_to_train)
+                # if self.winfo_exists(): # Check if main window still exists
+                #     messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_id}'.")
+                #
+                #     # train dataset after add new image
+                #     start_training()
             else:
                 if self.winfo_exists(): # Check if main window still exists
                     messagebox.showwarning("Thất bại", f"Không thể chụp hoặc lưu ảnh cho khách hàng '{customer_id}'. Vui lòng kiểm tra camera và quyền truy cập.")
