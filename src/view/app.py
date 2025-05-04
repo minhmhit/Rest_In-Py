@@ -333,6 +333,7 @@ class App(tk.Tk):
             print("[!] FORCE_EXIT_ON_CLOSE is True. Attempting os._exit(0).")
             os._exit(0) # This will terminate the process immediately
 
+        self.quit()
         print("[*] Application shutdown sequence finished.")
         # The process should exit naturally now if all resources are released.
 
