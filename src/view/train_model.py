@@ -54,16 +54,42 @@ def project_face(face, mean_face, eigvecs, num_components=10):
     return projection
 
 # train model after capture new customer image
+# def train_model_thread(dataset_path="dataset"): # Accept dataset_path as argument
+#     try:
+#         X, y, label_map = load_images(dataset_path)
+#         if X.size > 0: # Only train if there are images
+#             mean_face, eigvecs, A = train_eigenfaces(X)
+#             np.save("mean_face.npy", mean_face)
+#             np.save("eigvecs.npy", eigvecs)
+#             np.save("X_projected.npy", np.dot(eigvecs.T, A))
+#             np.save("labels.npy", y)
+#             print("Training completed!")
+#         else:
+#             print("No images found in the dataset to train.")
+#     except Exception as e:
+#         print("Training failed:", e)
+
 def train_model_thread(dataset_path="dataset"): # Accept dataset_path as argument
     try:
         X, y, label_map = load_images(dataset_path)
         if X.size > 0: # Only train if there are images
             mean_face, eigvecs, A = train_eigenfaces(X)
-            np.save("mean_face.npy", mean_face)
-            np.save("eigvecs.npy", eigvecs)
-            np.save("X_projected.npy", np.dot(eigvecs.T, A))
-            np.save("labels.npy", y)
-            print("Training completed!")
+
+            # Define the directory to save .npy files (src/view)
+            output_dir = os.path.dirname(os.path.abspath(__file__))
+
+            # Construct the full file paths for saving
+            mean_face_path = os.path.join(output_dir, "mean_face.npy")
+            eigvecs_path = os.path.join(output_dir, "eigvecs.npy")
+            x_projected_path = os.path.join(output_dir, "X_projected.npy")
+            labels_path = os.path.join(output_dir, "labels.npy")
+
+            np.save(mean_face_path, mean_face)
+            np.save(eigvecs_path, eigvecs)
+            np.save(x_projected_path, np.dot(eigvecs.T, A))
+            np.save(labels_path, y)
+
+            print(f"Training completed! Model files saved to: {output_dir}")
         else:
             print("No images found in the dataset to train.")
     except Exception as e:

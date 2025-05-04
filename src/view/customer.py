@@ -350,7 +350,7 @@ class Customer(tk.Frame):
             if success:
                 messagebox.showinfo("Thông báo", f"Đã chụp và lưu ảnh cho khách hàng '{customer_id}'")
                 import os
-                dataset_path_to_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dataset")
+                dataset_path_to_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset")
                 start_training(dataset_path=dataset_path_to_train)
                 # if self.winfo_exists(): # Check if main window still exists
                 #     messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_id}'.")
