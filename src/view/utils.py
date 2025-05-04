@@ -3,7 +3,7 @@ import os
 import tkinter as tk
 from tkinter import messagebox
 
-phone_camera_url = 'http://192.168.1.172:4747/video' # <--- **REPLACE THIS URL**
+phone_camera_url = 'http://192.168.1.172:4747/video' 
 
 def capture_customer_image(customer_id: str) -> bool:
     if not customer_id:

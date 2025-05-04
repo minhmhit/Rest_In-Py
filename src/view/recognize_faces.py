@@ -17,14 +17,8 @@ X_PROJECTED_FILE = os.path.join(AI_DIR_RELATIVE, "X_projected.npy")
 LABELS_FILE = os.path.join(AI_DIR_RELATIVE, "labels.npy")
 # Assuming haarcascade is also in src/AI/
 HAARCASCADE_FILE = os.path.join(AI_DIR_RELATIVE, 'haarcascade_frontalface_default.xml')
-# If you want to use the one installed with OpenCV (less reliable sometimes):
-# HAARCASCADE_BUILTIN = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-
 
 IMAGE_SIZE = (100, 100) # Standardize face image size
-
-# --- Functions matching the requested import names ---
-# These functions will use the correctly calculated paths defined above
 
 def load_model(num_components=10):
     print("[*] Loading face recognition model components...")
@@ -91,12 +85,8 @@ def build_label_map(dataset_directory=DATASET_PATH):
         return label_map # Return empty map if directory doesn't exist
 
     try:
-        # List subdirectories (each representing a person/label)
-        # Sort to ensure consistent label mapping (important for training/recognition consistency)
         subfolders = sorted([d for d in os.listdir(dataset_directory) if os.path.isdir(os.path.join(dataset_directory, d))])
 
-        # The original code's label map seems reversed based on typical usage (name: id)
-        # Reversing it to {id: name} for easier lookup by prediction label
         label_map = {idx: folder for idx, folder in enumerate(subfolders)}
 
         print(f"[✓] Built label map: {label_map}")
@@ -123,8 +113,6 @@ def preprocess_face_from_frame(gray_frame, face_coords):
 
         face_img = gray_frame[y:y+h, x:x+w]
         face_resized = cv2.resize(face_img, IMAGE_SIZE)
-        # Ensure image is the correct type (CV_8U) if needed
-        # face_resized = np.array(face_resized, 'uint8')
         return face_resized
     except Exception as e:
          print(f"[!] Error preprocessing face from coords {face_coords}: {e}")
@@ -160,13 +148,7 @@ def recognize_face_from_projection(face_proj, X_projected, labels, label_map, th
         face_proj = face_proj.reshape(-1, 1)
 
     try:
-        # Calculate Euclidean distances to all projected training images
-        # Need to compare the face_proj (column vector) to each column in X_projected
-        # X_projected shape is (num_components, num_training_images)
-        # face_proj shape is (num_components, 1)
-        # Use axis=0 for norm over the feature dimension
         distances = np.linalg.norm(X_projected - face_proj, axis=0)
-
 
         if distances.size == 0: # Handle case with no training data
              return "Unknown", float('inf')
@@ -189,12 +171,7 @@ def recognize_face_from_projection(face_proj, X_projected, labels, label_map, th
         print(f"[!] Error during face recognition prediction: {e}")
         return "Error", float('inf') # Handle prediction errors
 
-
-# You might want to keep the draw function from previous versions, but it wasn't in your original import list
-# Adding it here as it's useful for visualization
 def draw_prediction_on_frame(frame, name, distance, x, y, w, h, threshold=1500, color=(0, 255, 0)):
-    """Draws the bounding box and prediction text on the frame."""
-    # Decide color based on recognition status
     display_color = (0, 255, 0) # Green for recognized
     if name == "Unknown" or name == "Error" or distance > threshold:
         display_color = (0, 0, 255) # Red for unknown or error
@@ -214,20 +191,10 @@ def draw_prediction_on_frame(frame, name, distance, x, y, w, h, threshold=1500, 
 
 # ----------- Main Execution Function (to be called from elsewhere) ------------
 def run_camera_recognition(label_map):
-    """
-    Initializes components, opens camera, and runs the face recognition loop.
-    This function should be called by the main application logic (e.g., in camera.py).
-
-    Args:
-        label_map (dict): The label map ({id: name}).
-    """
     print("[*] Starting camera recognition...")
 
-    # Load necessary components using the defined functions
-    # This will handle paths and basic loading errors
     mean_face, eigvecs, X_projected, labels, face_cascade = load_model(num_components=10)
 
-    # Check if loading was successful and label map is valid
     if mean_face is None or eigvecs is None or X_projected is None or labels is None or face_cascade is None or not label_map:
         print("[!] Failed to load all required components or label map is empty. Cannot start recognition.")
         print("    Ensure model files exist, cascade loads, dataset is not empty, and label map is built.")
@@ -252,8 +219,6 @@ def run_camera_recognition(label_map):
         # Convert frame to grayscale for face detection and preprocessing
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Detect faces in the grayscale frame
-        # Returns a list of rectangles (x, y, w, h)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
         # Add quit instruction text
@@ -262,8 +227,6 @@ def run_camera_recognition(label_map):
 
 
         for (x, y, w, h) in faces:
-            # --- Recognition Pipeline for each detected face ---
-
             # 1. Preprocess the detected face region (extract ROI and resize)
             face_resized = preprocess_face_from_frame(gray, (x, y, w, h))
 
@@ -280,8 +243,6 @@ def run_camera_recognition(label_map):
 
                     # 4. Draw the results on the original color frame
                     draw_prediction_on_frame(frame, name, distance, x, y, w, h, threshold=recognition_threshold)
-            # --- End Recognition Pipeline ---
-
 
         # Display the resulting frame with detections/predictions
         cv2.imshow("Camera - Nhan dien khuon mat", frame)

@@ -50,7 +50,6 @@ if 'format_currency' not in locals():
 
 
 class Checkout(tk.Frame):
-    # Added revenue_callback parameter to send finalized revenue data back to App
     # controller is the App instance
     def __init__(self, parent, controller, revenue_callback: Callable[[RevenueData], None], db_conn: DB_Connector):
         super().__init__(parent, bg=COLOR_BACKGROUND_LIGHT)
@@ -203,7 +202,6 @@ class Checkout(tk.Frame):
 
     # --- Helper to process raw date input (string or datetime) into datetime object ---
     def _process_date_input_to_datetime(self, raw_date_value):
-         """Converts raw date input (string or datetime) to a datetime object or None."""
          if isinstance(raw_date_value, datetime):
              return raw_date_value # Already a datetime object
          elif isinstance(raw_date_value, date): # Handle date objects too
@@ -221,31 +219,21 @@ class Checkout(tk.Frame):
 
     # --- Calculate Base Room Cost from Duration ---
     def calculate_room_cost_from_duration(self, duration, room_type):
-        """Calculates the base room cost based on duration and room type."""
         if duration is None or duration <= 0:
             return 0
 
-        # Ensure room_type matches keys in self.price_per_day (e.g., "Thường" vs "Normal")
-        # Use .get() with a default to handle potential mismatches gracefully
         room_rate = self.price_per_day.get(room_type, self.price_per_day.get("Thường", 250000)) # Default to "Thường" if type not found
 
         return duration * room_rate
 
     # --- refresh_display method (Called by App when tab is shown) ---
     def refresh_display(self):
-        """
-        Refreshes the display with the current customer data from the controller
-        and recalculates costs.
-        """
         print("[*] Checkout tab refreshing display and recalculating...")
         self.load_and_calculate() # Call the existing method to load and calculate
 
 
     # --- load_and_calculate method (Refined Label Updating) ---
     def load_and_calculate(self):
-        """Loads customer info from controller, calculates costs (room + additional), and updates display."""
-        # Get the current customer data from the controller (App instance)
-        # Assuming App stores the selected customer in an attribute like 'current_customer_for_checkout'
         customer_data = getattr(self.controller, 'current_customer_for_checkout', None)
 
         if not customer_data:
@@ -358,9 +346,6 @@ class Checkout(tk.Frame):
                   messagebox.showwarning("Thiếu thông tin", "Không có dữ liệu khách hàng để hoàn tất thanh toán.")
              return
 
-        # Retrieve calculated total amount from the result label text
-        # This is a bit fragile, ideally store the calculated total in an instance variable
-        # For now, let's re-calculate or try to parse the label text
         try:
              # Re-calculate total to be safe
              raw_checkin_date = getattr(customer_data, "checkin_date", None)
@@ -391,7 +376,6 @@ class Checkout(tk.Frame):
         checkout_date_str = datetime.today().strftime("%Y-%m-%d") # YYYY-MM-DD string
 
         # Create a RevenueData object, passing all required attributes
-        # Use getattr to safely get attributes from customer_data
         revenue_record = RevenueData(
             id=getattr(customer_data, 'id', None),
             name=getattr(customer_data, 'name', None),
@@ -413,9 +397,6 @@ class Checkout(tk.Frame):
                 if self.winfo_exists():
                      messagebox.showinfo("Thành công", "Thanh toán đã hoàn tất và doanh thu đã được ghi nhận.")
 
-                # --- Optional: Clear the current customer data in App after successful checkout ---
-                # This should be handled by the App's revenue_callback
-                # Assuming the App's callback will set self.current_customer_for_checkout = None
                 print("[*] Assuming App's revenue_callback handles clearing current customer data.")
 
                 # save revenue to database
@@ -435,7 +416,6 @@ class Checkout(tk.Frame):
 
 
     def clear_display(self):
-        """Clears the customer details and calculation results."""
         # Clear customer info labels using self.info_fields
         for title, field in self.info_fields:
              if field in self.labels:

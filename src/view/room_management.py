@@ -18,9 +18,6 @@ COLOR_TEXT_DARK = "#333333"
 COLOR_TEXT_MEDIUM = "#555555"
 COLOR_BORDER_GRAY = "#cccccc"
 
-# --- Define all possible room numbers ---
-# Pattern: 101-105, 201-205, ..., 901-905
-# Ensure this matches the room numbers used elsewhere (e.g., in Customer tab)
 ALL_ROOM_NUMBERS = [f"{floor * 100 + room}" for floor in range(1, 10) for room in range(1, 6)]
 
 

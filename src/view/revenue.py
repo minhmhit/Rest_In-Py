@@ -4,13 +4,7 @@ import locale
 from datetime import datetime, timedelta
 import random # Import random for sample data
 
-# Assume view.models contains RevenueData
-# Make sure your RevenueData class has attributes corresponding to the columns
-# and ideally a get_values_for_treeview method as suggested in the Checkout comments.
 from view.models import RevenueData
-
-# Assuming view.db.database contains DB_Connector (if needed for direct DB interaction in this tab)
-# from view.db.database import DB_Connector # Uncomment if you need DB interaction here
 
 # --- Vietnamese Locale and Currency Formatting ---
 def format_currency_fallback(amount):
@@ -42,13 +36,9 @@ if 'format_currency' not in locals():
 
 
 class Revenue(tk.Frame):
-    # Accept the list of RevenueData objects and the DB connector in __init__
-    # The single RevenueData object is NOT passed here; it's passed via the App's callback.
     def __init__(self, parent, revenue_list=None, db_conn=None):
         super().__init__(parent, bg="#F5F5F5")
 
-        # Store the provided list of RevenueData objects.
-        # This list is managed by the App and passed down.
         self.revenue_list = revenue_list if revenue_list is not None else []
         self.db_conn = db_conn # Store the database connector (optional, depending on usage)
 
@@ -56,9 +46,6 @@ class Revenue(tk.Frame):
         table_frame = tk.LabelFrame(self, text="Doanh Thu Nhà Nghỉ", bg="#F5F5F5", font=("Arial", 12, "bold"))
         table_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Columns Definition - Translated
-        # Ensure this matches the order and number of fields in your RevenueData object
-        # and the get_values_for_treeview method if you implement it.
         column_identifiers = ("Mã", "Tên", "Giới tính", "Ngày sinh", "Quốc tịch", "Quê quán", "Ngày nhận phòng", "Ngày trả phòng", "Loại phòng", "Số phòng", "Tổng tiền")
 
         # Treeview Widget
@@ -121,7 +108,6 @@ class Revenue(tk.Frame):
         self.refresh_list_button.grid(row=0, column=1, sticky="e") # Use grid for side-by-side
 
         # --- Initial Load and Calculation ---
-        # Load initial data into the treeview and calculate total
         self.load_revenue_data()
         self.update_total_revenue()
 
@@ -141,12 +127,9 @@ class Revenue(tk.Frame):
                  continue # Skip non-RevenueData items
 
             # Use the get_values_for_treeview method from RevenueData if available
-            # This makes the code cleaner and relies on the data class to provide the correct tuple
             if hasattr(revenue, 'get_values_for_treeview') and callable(revenue.get_values_for_treeview):
                  revenue_values = revenue.get_values_for_treeview()
             else:
-                # Fallback if get_values_for_treeview is not implemented in RevenueData
-                # Ensure attribute names match RevenueData's __init__ and column_identifiers
                 revenue_values = (
                     getattr(revenue, 'id', ''),
                     getattr(revenue, 'name', ''),
@@ -210,7 +193,6 @@ class Revenue(tk.Frame):
 
 
     # --- Method to refresh the display from the internal list ---
-    # This method is called by the App when the tab is shown or when new data is added.
     def refresh_display(self):
         self.load_revenue_data() # Reload data from the internal list into Treeview
         self.update_total_revenue() # Recalculate and update total
@@ -218,9 +200,6 @@ class Revenue(tk.Frame):
 
     def add_sample_record(self):
         print("[*] Adding sample revenue record...")
-        # Create a sample RevenueData object
-        # In a real application, this would come from user input or another process.
-        # For demonstration, we generate a random one.
         sample_id = len(self.revenue_list) + 1 # Simple way to get a unique ID
         sample_name = f"Khách Mẫu {sample_id}"
         sample_sex = random.choice(["Nam", "Nữ"])

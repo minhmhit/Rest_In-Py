@@ -8,18 +8,9 @@ from datetime import datetime
 import time
 import os # Import os for path joining
 
-# Import the necessary functions from the refactored recognize_faces module
-# The import path assumes recognize_faces.py is in the same 'view' directory
-# If recognize_faces.py is in src/AI/, the import should be from AI.recognize_faces import ...
-# Based on the last traceback, it's in src/view/.
-from view.recognize_faces import load_model, build_label_map, preprocess_face_from_frame, project_face, recognize_face_from_projection, draw_prediction_on_frame # Assuming draw_prediction_on_frame is also needed
+from view.recognize_faces import load_model, build_label_map, preprocess_face_from_frame, project_face, recognize_face_from_projection, draw_prediction_on_frame 
 
-# --- Define paths for resources directly used by camera.py ---
-# If camera.py needs to load files directly, define paths relative to camera.py
-# Assuming the haarcascade file is in src/AI/
-# To get from src/view/camera.py to src/AI/haarcascade_frontalface_default.xml:
-# Go up one level ('..') to src/, then down into 'AI', then specify the filename
-CAMERA_DIR = os.path.dirname(__file__) # Directory of this file (src/view/)
+CAMERA_DIR = os.path.dirname(__file__)
 HAARCASCADE_CAMERA_PATH = os.path.join(CAMERA_DIR, '..', 'view', 'haarcascade_frontalface_default.xml')
 
 # Define the threshold for recognition distance
@@ -36,16 +27,12 @@ class Camera(tk.Frame):
         super().__init__(parent, bg=BG_COLOR)
 
         # --- Recognition Components ---
-        # Load these components once when the Camera object is initialized
         print("[*] Initializing face recognition components in Camera...")
-        # load_model and build_label_map handle their internal paths (relative to recognize_faces.py)
         self.mean_face, self.eigvecs, self.X_projected, self.labels, self.face_cascade_loaded_via_model = load_model(num_components=10)
         self.label_map = build_label_map()
 
-        # Also load the cascade classifier directly in camera.py if needed for detection
         # Using the path defined relative to camera.py
         self.face_cascade = cv2.CascadeClassifier(HAARCASCADE_CAMERA_PATH)
-
 
         # Store recognition components together and check if loading was successful
         self.recognition_components = (self.mean_face, self.eigvecs, self.X_projected, self.labels)
@@ -83,12 +70,10 @@ class Camera(tk.Frame):
         self.after_id = None # For managing Tkinter's after calls
 
         # --- UI Setup ---
-        # Use BG_COLOR constant
         self.mainPanel = tk.LabelFrame(self, bg="white") # Keep main panel white for camera feed
         self.leftPanel = tk.LabelFrame(self, bg=BG_COLOR) # Left panel background
 
         # configure weights for main Camera frame columns
-        # Adjusted weights: Left panel (column 0) gets weight 1, Main panel (column 1) gets weight 7
         self.columnconfigure(0, weight=1) # Left panel (smaller)
         self.columnconfigure(1, weight=7) # Main panel (larger)
         self.rowconfigure(0, weight=1) # Only one row, make it expand
@@ -113,8 +98,6 @@ class Camera(tk.Frame):
         # Label to display the camera feed (initially empty)
         self.show_camera = tk.Label(
             self.mainPanel, bg="black", bd=0 # Black background for camera area
-            # Do NOT set height/width fixed here if using sticky="nsew" and weights
-            # Let grid/pack manage size, or set minimum size if needed
         )
 
         # Main panel weights for internal widgets
@@ -128,7 +111,6 @@ class Camera(tk.Frame):
 
 
         # --- Left Panel Widgets (Notifications) ---
-        # Add a title for the notification box
         self.notification_title = tk.Label(
             self.leftPanel,
             bg=BG_COLOR,
@@ -143,7 +125,6 @@ class Camera(tk.Frame):
         self.notification_box = tk.Text(
             self.leftPanel,
             height=5, # Height in text lines (can be overridden by grid/pack)
-            # width=10, # Width in characters (can be overridden)
             bg="white", # White background for text box
             fg="black",
             state="disabled", # Start as disabled
@@ -164,13 +145,9 @@ class Camera(tk.Frame):
 
         # --- Recognition Logging ---
         self.last_logged_times = {} # {name: timestamp} to track last log time for each person
-        # Ensure timelog.txt path is correct relative to where main.py is run
-        # If timelog.txt is in the project root (where you run python src/main.py)
         self.timelog_file_path = "view/timelog.txt"
 
-
         # --- Start Update Loop ---
-        # Only start the update loop if the camera successfully opened
         if self.running:
              self.update_frame() # Start the frame update loop
         else:
@@ -179,8 +156,6 @@ class Camera(tk.Frame):
 
 
     # --- Notification Methods ---
-    # (Your existing notification methods)
-
     def remove_oldest_notifications(self):
         """Removes the oldest notification if the list is not empty."""
         if self.notifications:
@@ -193,8 +168,6 @@ class Camera(tk.Frame):
         self.notification_box.config(state="normal") # Enable editing temporarily
         self.notification_box.delete("1.0", tk.END) # Clear all text
 
-        # Insert new notifications first (newest at the top)
-        # Join messages with newlines; notifications are stored oldest first, so reverse for newest-first display
         new_text = "\n".join(self.notifications[::-1])
         self.notification_box.insert("1.0", new_text) # Insert all at the beginning
 
@@ -224,12 +197,10 @@ class Camera(tk.Frame):
 
 
         # --- Perform Recognition (Only if enabled) ---
-        # Only attempt face detection and recognition if components loaded
         if self.recognition_enabled:
              # Convert frame to grayscale for face detection and preprocessing
              gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-             # Detect faces using the cascade loaded in __init__
              # Use self.face_cascade which is the cascade loaded in camera.py
              faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
 
@@ -238,10 +209,8 @@ class Camera(tk.Frame):
 
 
              for (x, y, w, h) in faces:
-                 # --- Recognition Pipeline for each detected face ---
 
                  # 1. Preprocess the detected face region (extract ROI and resize)
-                 # Call imported function from recognize_faces.py
                  face_resized = preprocess_face_from_frame(gray, (x, y, w, h))
 
                  if face_resized is not None:
@@ -260,19 +229,7 @@ class Camera(tk.Frame):
                            # Use the imported draw function
                            draw_prediction_on_frame(frame, name, distance, x, y, w, h, threshold=RECOGNITION_THRESHOLD) # Pass threshold to drawing function
                            self.log_recognition(name) # Log the name if recognized
-             # Log recognition results after processing all faces in the frame
-             # This might log multiple times per person if they appear in multiple frames
-             # Consider logging only once per person per time interval in log_recognition
-             # (The current log_recognition already handles the time interval)
-             # No need to call log_recognition here inside the face loop, it's called within update_frame
-
-
-
-        # --- End Recognition ---
         else:
-            # If recognition is not enabled, you might still want to draw faces or show a message
-            # Or just display the raw camera feed.
-            # You can still detect faces if self.face_cascade is loaded, even if recognition data is missing
             if self.face_cascade is not None and not self.face_cascade.empty():
                  gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                  faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -283,29 +240,15 @@ class Camera(tk.Frame):
 
 
         # --- Display Frame in Tkinter ---
-        # Convert the OpenCV frame (BGR) to RGB for PIL
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(frame)
 
         # Resize image to fit the Label widget size
-        # Get current size of the label widget
         label_width = self.show_camera.winfo_width()
         label_height = self.show_camera.winfo_height()
 
-        # Only resize if the label has a valid size (might be 0 before window is displayed)
-        # This logic makes the image fill the label's space, potentially stretching it if aspect ratios differ
         if label_width > 0 and label_height > 0:
             img = img.resize((label_width, label_height), Image.Resampling.LANCZOS) # Use LANCZOS for better quality resize
-        # If you want to maintain aspect ratio and center, the logic would be different:
-        # frame_h, frame_w, _ = frame.shape
-        # aspect_ratio = frame_w / frame_h
-        # target_w = label_width
-        # target_h = int(target_w / aspect_ratio)
-        # if target_h > label_height:
-        #     target_h = label_height
-        #     target_w = int(target_h * aspect_ratio)
-        # img = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
-        # # Then potentially center the image within the label
 
         imgtk = ImageTk.PhotoImage(image=img)
 

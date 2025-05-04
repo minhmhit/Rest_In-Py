@@ -14,7 +14,6 @@ class CustomerInfo:
          self.room_number = room_number if room_number is not None else ""
 
      def _format_date_input(self, date_value):
-          """Helper to ensure date is stored as YYYY-MM-DD string or None/empty."""
           if isinstance(date_value, datetime):
                return date_value.strftime("%Y-%m-%d")
           elif isinstance(date_value, str) and date_value:
@@ -85,7 +84,6 @@ class StaffInfo:
         return False
 
     def get_values_for_treeview(self) -> tuple:
-        """Returns a tuple of values in the correct order for Treeview display (YYYY-MM-DD)."""
         return (
             self.id, self.name, self.sex, self.birthday,
             self.role, self.username, self.password,

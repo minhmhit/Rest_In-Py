@@ -1,17 +1,13 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime, date # Import date
-# Assume CustomerInfo and DB_Connector are correctly imported
 from view.models import CustomerInfo
-# from database import DB_Connector
 from tkcalendar import Calendar
 from view.db.database import DB_Connector
 from typing import Callable, List
 
 from view.train_model import start_training # Import Callable and List for type hinting
 
-# Import the new utility function for capturing images
-# Make sure to create src/view/utils.py and implement capture_customer_image there
 try:
     from view.utils import capture_customer_image
     CAPTURE_AVAILABLE = True
@@ -31,24 +27,16 @@ COLOR_TEXT_DARK = "#333333"
 COLOR_TEXT_MEDIUM = "#555555"
 COLOR_BORDER_GRAY = "#cccccc"
 
-# --- Define all possible room numbers ---
-# Moved outside method for efficiency
 ALL_ROOM_NUMBERS = [f"{floor * 100 + room}" for floor in range(1, 10) for room in range(1, 10)]
 
-
 class Customer(tk.Frame):
-    # Added refresh_room_management_callback parameter (assuming App still provides this)
-    # controller is the App instance
     def __init__(self, parent,show_tab: Callable[[str], None],controller,customer_list: List[CustomerInfo],db_conn: DB_Connector,refresh_room_management_callback: Callable[[], None] | None =None):
         super().__init__(parent, bg=COLOR_BACKGROUND_LIGHT)
         self.show_tab = show_tab
-        # self.controller is the App instance
         self.controller = controller
         self.customer_list = customer_list # The list holding CustomerInfo objects
         self.db_conn = db_conn
-        # Store the callback for refreshing Room Management, default to None if not provided
         self.refresh_room_management_callback = refresh_room_management_callback
-
 
         # Define fields for consistency
         self.customer_fields = [
@@ -58,7 +46,6 @@ class Customer(tk.Frame):
         ]
         self.treeview_columns = [title for title, field in self.customer_fields]
         self.treeview_field_map = {title: field for title, field in self.customer_fields}
-
 
         # Create panels
         self.mainPanel = tk.LabelFrame(
@@ -79,7 +66,6 @@ class Customer(tk.Frame):
         style.configure("Treeview", font=("Arial", 10), rowheight=25, fieldbackground=COLOR_MAIN_PANEL_BG, foreground=COLOR_TEXT_DARK)
         style.map("Treeview", background=[("selected", COLOR_PRIMARY_BLUE)], foreground=[("selected", "white")])
 
-
         self.tree = ttk.Treeview(
             self.mainPanel, columns=self.treeview_columns, show="headings", style="Treeview"
         )
@@ -94,7 +80,6 @@ class Customer(tk.Frame):
 
 
         self.populate_treeview()
-
 
         scrollbar = ttk.Scrollbar(
             self.mainPanel, orient="vertical", command=self.tree.yview
@@ -155,9 +140,7 @@ class Customer(tk.Frame):
     def _get_available_room_numbers(self):
         """Returns a sorted list of room numbers that are not currently occupied."""
         occupied_rooms = self._get_occupied_room_numbers()
-        # Filter ALL_ROOM_NUMBERS to exclude occupied rooms
         available_rooms = [room for room in ALL_ROOM_NUMBERS if room not in occupied_rooms]
-        # Sort numerically
         available_rooms.sort(key=int)
         return available_rooms
 
@@ -169,8 +152,6 @@ class Customer(tk.Frame):
 
         # Add data (expecting CustomerInfo objects with YYYY-MM-DD strings or None)
         for customer in self.customer_list:
-            # Use the get_values_for_treeview method from CustomerInfo
-            # Assume CustomerInfo has this method and returns YYYY-MM-DD strings or ""
             if hasattr(customer, 'get_values_for_treeview'):
                  values = customer.get_values_for_treeview()
                  # Ensure iid is a string and not empty
@@ -318,18 +299,13 @@ class Customer(tk.Frame):
         padding_frame.columnconfigure(1, weight=1) # Entry/Combobox column expands
 
         # --- Capture Image Button ---
-        # Placed below the input fields
         capture_button_frame = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
         # Grid this frame below the last input field row
         capture_button_frame.grid(row=len(add_fields_and_titles), column=0, columnspan=3, pady=(15, 5))
         capture_button_frame.columnconfigure(0, weight=1) # Center the button
 
         def on_capture_click():
-            """Handles the click event for the Capture Image button."""
-            # Get name from the 'name' entry widget safely
-            # name_entry_widget = entries.get('name')
             id_entry_widget = entries.get('id')
-            # customer_name = name_entry_widget.get().strip() if name_entry_widget else ""
             customer_id = id_entry_widget.get().strip() if id_entry_widget else ""
 
             if not customer_id:
@@ -342,8 +318,6 @@ class Customer(tk.Frame):
                       messagebox.showerror("Lỗi", "Chức năng chụp ảnh không khả dụng. Vui lòng kiểm tra file view/utils.py.")
                  return
 
-            # Call the external capture function
-            # This function should handle opening the camera, capturing, and saving
             print(f"[*] Attempting to capture image for customer: {customer_id}")
             success = capture_customer_image(str(customer_id)) # Call the utility function
 
@@ -352,11 +326,6 @@ class Customer(tk.Frame):
                 import os
                 dataset_path_to_train = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset")
                 start_training(dataset_path=dataset_path_to_train)
-                # if self.winfo_exists(): # Check if main window still exists
-                #     messagebox.showinfo("Thành công", f"Đã chụp và lưu ảnh cho khách hàng '{customer_id}'.")
-                #
-                #     # train dataset after add new image
-                #     start_training()
             else:
                 if self.winfo_exists(): # Check if main window still exists
                     messagebox.showwarning("Thất bại", f"Không thể chụp hoặc lưu ảnh cho khách hàng '{customer_id}'. Vui lòng kiểm tra camera và quyền truy cập.")
@@ -379,9 +348,6 @@ class Customer(tk.Frame):
                 widget_value = getattr(widget, 'get', lambda: '')() # Get value if get method exists, otherwise empty string
                 new_customer_values[field] = str(widget_value).strip() # Ensure it's a string and strip whitespace
 
-
-            # Validation
-            # room_number is now validated by the Combobox selection, but check if it's empty
             required_fields = ['id', 'name', 'checkin_date', 'room_type', 'room_number']
             for field in required_fields:
                  if not new_customer_values.get(field):
@@ -410,7 +376,6 @@ class Customer(tk.Frame):
                            return
 
             # Check if room number is already occupied (should be handled by dropdown, but double check)
-            # Need to get occupied rooms dynamically here as well
             if new_customer_values.get('room_number') in self._get_occupied_room_numbers():
                  # Check if the main window still exists before showing messagebox
                  if self.winfo_exists():
@@ -457,10 +422,6 @@ class Customer(tk.Frame):
                 # Check if the main window still exists before showing messagebox
                 if self.winfo_exists():
                      messagebox.showerror("Lỗi Database", f"Không thể thêm khách hàng vào database:\n{e}")
-                # Optional: revert change in self.customer_list/treeview if DB fails?
-                # self.customer_list.pop()
-                # self.populate_treeview()
-
 
         button_frame_bottom = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
         button_frame_bottom.grid(row=len(add_fields_and_titles) + 1, column=0, columnspan=3, pady=(5, 0)) # Placed below capture button frame
@@ -517,8 +478,6 @@ class Customer(tk.Frame):
                 row=i, column=0, padx=5, pady=5, sticky="w"
             )
 
-            # Get the current value from the selected customer object
-            # Ensure dates are already YYYY-MM-DD strings from CustomerInfo
             current_value = getattr(selected_customer, field, "")
             current_value_str = str(current_value) if current_value is not None else "" # Ensure it's a string
 
@@ -556,7 +515,6 @@ class Customer(tk.Frame):
                  entries[field] = widget
             elif field == "room_number":
                  # --- Room Number Combobox for Editing ---
-                 # Get available rooms, and add the current room number to the list
                  available_rooms = self._get_available_room_numbers()
                  current_room = current_value_str # The customer's current room
                  # Add the current room to the available list if it's not already there
@@ -587,7 +545,6 @@ class Customer(tk.Frame):
                                          bg=COLOR_ACCENT_TEAL, fg="white", activebackground="#117a8b", activeforeground="white",
                                          relief=tk.RAISED, padx=5, pady=2, cursor="hand2")
                  date_button.grid(row=i, column=2, padx=(0, 5), pady=5, sticky="w")
-                 # No need to store date_button in entries dict
             else:
                  # Standard Entry for other fields (name, national, country)
                  entry = tk.Entry(padding_frame, font=("Arial", 10))
@@ -598,15 +555,11 @@ class Customer(tk.Frame):
         padding_frame.columnconfigure(1, weight=1)
 
         # --- Capture Image Button (in Edit window - Optional, but included for consistency) ---
-        # You might want to capture a new image when editing a customer too
         capture_button_frame = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
-        # Grid this frame below the last input field row
         capture_button_frame.grid(row=len(edit_fields_and_titles), column=0, columnspan=3, pady=(15, 5))
         capture_button_frame.columnconfigure(0, weight=1) # Center the button
 
         def on_capture_click_edit():
-            """Handles the click event for the Capture Image button in the Edit window."""
-            # Get name from the 'name' entry widget safely
             name_entry_widget = entries.get('name')
             customer_name = name_entry_widget.get().strip() if name_entry_widget else ""
 
@@ -652,7 +605,6 @@ class Customer(tk.Frame):
 
 
             # Validation (similar to add customer)
-            # room_number is now validated by the Combobox selection, but check if it's empty
             required_fields = ['id', 'name', 'checkin_date', 'room_type', 'room_number']
             for field in required_fields:
                  if not updated_values.get(field):
@@ -749,11 +701,8 @@ class Customer(tk.Frame):
                 # Check if the main window still exists before showing messagebox
                 if self.winfo_exists():
                      messagebox.showerror("Lỗi Database", f"Không thể cập nhật khách hàng trong database:\n{e}")
-                # Optional: revert change in self.customer_list/treeview if DB fails?
-
 
         button_frame_bottom = tk.Frame(padding_frame, bg=COLOR_BACKGROUND_LIGHT)
-        # Placed below capture button frame in edit window
         button_frame_bottom.grid(row=len(edit_fields_and_titles) + 1, column=0, columnspan=3, pady=(5, 0))
         button_frame_bottom.columnconfigure(0, weight=1)
 
@@ -762,7 +711,6 @@ class Customer(tk.Frame):
                              activebackground="#1e7e34", activeforeground="white",
                              relief=tk.RAISED, padx=10, pady=5, cursor="hand2")
         save_btn.pack(expand=True)
-
 
     # --- remove_customer method (Keep as is, uses ID string, added Callback) ---
     def remove_customer(self):
@@ -782,7 +730,6 @@ class Customer(tk.Frame):
              for customer_id in customer_ids_to_remove:
                  # Remove from local list
                  initial_list_length = len(self.customer_list)
-                 # Compare string IDs
                  self.customer_list = [c for c in self.customer_list if str(getattr(c, 'id', None)) != customer_id]
 
                  if len(self.customer_list) < initial_list_length:
@@ -838,8 +785,6 @@ class Customer(tk.Frame):
 
         if customer_to_checkout:
              try:
-                 # Pass the selected CustomerInfo object to the controller (App)
-                 # Assuming App has a method like 'set_customer_for_checkout'
                  if hasattr(self.controller, 'set_current_customer_for_checkout'):
                      self.controller.set_current_customer_for_checkout(customer_to_checkout)
                      print(f"[*] Passed CustomerInfo object for ID {getattr(customer_to_checkout, 'id', 'N/A')} to controller for checkout.")

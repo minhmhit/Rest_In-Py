@@ -80,8 +80,6 @@ class RevenueChart(tk.Frame):
         self.update_charts()
 
 
-    # --- Helper to process raw date input (string or datetime) into datetime object ---
-    # Copy this method from Customer/Checkout/StaffManagement classes
     def _process_date_input_to_datetime(self, raw_date_value):
          """Converts raw date input (string or datetime) to a datetime object or None."""
          if isinstance(raw_date_value, datetime):
@@ -176,20 +174,10 @@ class RevenueChart(tk.Frame):
 
     # --- Create Widgets (Notebook, Tab Frames) ---
     def create_widgets(self):
-        """Sets up the Notebook and frames for each chart tab."""
-        # --- Notebook for different Charts ---
-        # Style for Notebook (optional, depends on theme, might not change appearance much)
-        # style = ttk.Style()
-        # style.configure("TNotebook", background=COLOR_BACKGROUND_LIGHT, borderwidth=0)
-        # style.configure("TNotebook.Tab", background=COLOR_FRAME_BACKGROUND, foreground=COLOR_TEXT_DARK)
-        # style.map("TNotebook.Tab", background=[("selected", COLOR_PRIMARY_BLUE)], foreground=[("selected", COLOR_WHITE)])
-
-
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10) # Add padding around the notebook
 
         # --- Style for the Frames *inside* the Notebook tabs ---
-        # This style ensures the content area of each tab has the desired background
         style = ttk.Style()
         style.configure("ChartFrame.TFrame", background=COLOR_MAIN_PANEL_BG) # Use white background
 
@@ -210,8 +198,6 @@ class RevenueChart(tk.Frame):
         self.monthly_revenue_frame = ttk.Frame(self.notebook, style="ChartFrame.TFrame") # Apply style
         self.notebook.add(self.monthly_revenue_frame, text="Doanh Thu theo Tháng") # Use self. for instance attribute
 
-
-        # --- Button to show Province Color Legend (place in the province frame) ---
         # Style the button consistently
         button_font = ("Arial", 10, "bold")
         button_pady = 5
@@ -361,11 +347,6 @@ class RevenueChart(tk.Frame):
              plt.close(fig) # Close the empty figure
              return
 
-
-        # Use a colormap to get colors for provinces
-        # We can choose a different colormap if 'viridis' doesn't fit the theme
-        # Example: 'tab10', 'viridis', 'plasma', 'Blues', 'Greens'
-        # Let's use 'tab10' for fewer distinct colors or 'viridis' for more
         colors = plt.cm.get_cmap('tab10', max(num_provinces, 10)) # Use tab10, ensure at least 10 colors if num_provinces is small
 
         # Assign a color and position index to each province
@@ -432,12 +413,6 @@ class RevenueChart(tk.Frame):
         # Create the line chart
         line, = ax.plot(month_years, revenue_data, marker='o', linestyle='-', color=COLOR_ACCENT_TEAL) # Use accent teal
 
-        # Add revenue values next to markers (optional, can clutter for many points)
-        # for i, my in enumerate(month_years):
-        #     revenue = revenue_data[i]
-        #     ax.text(my, revenue, format_currency(revenue), ha='center', va='bottom', fontsize=7, color=COLOR_TEXT_DARK, rotation=45)
-
-
         # Style the chart elements
         ax.set_xlabel("Tháng/Năm", fontsize=12, color=COLOR_TEXT_DARK)
         ax.set_ylabel("Doanh Thu", fontsize=12, color=COLOR_TEXT_DARK)
@@ -467,7 +442,6 @@ class RevenueChart(tk.Frame):
 
     # --- Show Province Color Legend ---
     def show_province_colors(self):
-        """Opens a Toplevel window to display the color mapping for provinces."""
         if not self.province_colors:
             messagebox.showinfo("Thông tin", "Không có dữ liệu tỉnh/thành phố để hiển thị chú giải.")
             return
@@ -499,59 +473,3 @@ class RevenueChart(tk.Frame):
             # Province name label
             province_label = tk.Label(frame, text=f"{province}", bg=COLOR_BACKGROUND_LIGHT, fg=COLOR_TEXT_DARK, font=("Arial", 10)) # Province name
             province_label.pack(side=tk.LEFT, padx=2)
-
-            # Optional: Display the hex code next to the name
-            # hex_label = tk.Label(frame, text=f"({color_hex})", bg=COLOR_BACKGROUND_LIGHT, fg=COLOR_TEXT_MEDIUM, font=("Arial", 8))
-            # hex_label.pack(side=tk.LEFT)
-
-
-# --- Example Usage (Standalone Test) ---
-# This block allows you to run and test the RevenueChart frame by itself
-# if you have the mock CustomerInfo defined above or the actual customer_information file.
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("Revenue Chart Test")
-    root.geometry("1000x700")
-    root.configure(bg=COLOR_BACKGROUND_LIGHT)
-
-
-    # --- Mock Data Setup ---
-    # Mock CustomerInfo class is defined above for standalone testing
-    # Create mock customer data as CustomerInfo objects
-    # Using checkin_date (YYYY-MM-DD string), room_type, and country attributes
-    mock_customer_data = [
-        # Data for 2020
-        CustomerInfo(id=1, name="A", country="Hồ Chí Minh", checkin_date="2020-01-10", room_type="VIP"), # Duration ~today-Jan2020
-        CustomerInfo(id=2, name="B", country="Hà Nội", checkin_date="2020-03-15", room_type="Thường"),
-        CustomerInfo(id=3, name="C", country="Hồ Chí Minh", checkin_date="2020-07-01", room_type="VIP"),
-        CustomerInfo(id=4, name="D", country="Đà Nẵng", checkin_date="2020-11-22", room_type="Thường"),
-        # Data for 2021
-        CustomerInfo(id=5, name="E", country="Hồ Chí Minh", checkin_date="2021-02-01", room_type="VIP"),
-        CustomerInfo(id=6, name="F", country="Hà Nội", checkin_date="2021-04-10", room_type="Thường"),
-        CustomerInfo(id=7, name="G", country="Đà Nẵng", checkin_date="2021-08-05", room_type="VIP"),
-        CustomerInfo(id=8, name="H", country="Hải Phòng", checkin_date="2021-12-01", room_type="Thường"),
-         # Data for 2022
-        CustomerInfo(id=9, name="I", country="Hồ Chí Minh", checkin_date="2022-01-20", room_type="VIP"),
-        CustomerInfo(id=10, name="J", country="Hà Nội", checkin_date="2022-03-30", room_type="Thường"),
-        CustomerInfo(id=11, name="K", country="Cần Thơ", checkin_date="2022-06-15", room_type="VIP"),
-        # Data for 2023
-        CustomerInfo(id=12, name="L", country="Hồ Chí Minh", checkin_date="2023-01-05", room_type="VIP"),
-        CustomerInfo(id=13, name="M", country="Hà Nội", checkin_date="2023-02-28", room_type="Thường"),
-        # Data for 2024
-        CustomerInfo(id=14, name="N", country="Hồ Chí Minh", checkin_date="2024-01-15", room_type="VIP"),
-        CustomerInfo(id=15, name="O", country="Đà Nẵng", checkin_date="2024-03-10", room_type="Thường"),
-        # Data for 2025 (assuming current date is in 2025 for calculation)
-        CustomerInfo(id=16, name="P", country="Hồ Chí Minh", checkin_date="2025-01-01", room_type="VIP"),
-        CustomerInfo(id=17, name="Q", country="Hà Nội", checkin_date="2025-02-14", room_type="Thường"),
-        CustomerInfo(id=18, name="R", country="Cần Thơ", checkin_date="2025-03-01", room_type="VIP"),
-    ]
-    # --- End Mock Data Setup ---
-
-
-    # Instantiate the RevenueChart frame, passing the mock data
-    revenue_chart_frame = RevenueChart(root, customer_list=mock_customer_data)
-    # Pack the frame to make it visible
-    revenue_chart_frame.pack(fill="both", expand=True)
-
-    # Start the Tkinter event loop
-    root.mainloop()

@@ -19,9 +19,7 @@ from view.db.database import DB_Connector
 
 import cv2 # Import cv2 at the top level
 
-# Flag to control forced exit (Use with caution, only if clean exit fails)
 FORCE_EXIT_ON_CLOSE = False # Keep False by default
-
 
 class App(tk.Tk):
     # Initialize with data lists (loaded in main) and db_conn
@@ -50,7 +48,6 @@ class App(tk.Tk):
 
 
         # --- Data for Checkout Tab ---
-        # This attribute will hold the CustomerInfo object selected by the user for checkout
         self.current_customer_for_checkout: CustomerInfo | None = None
 
 
@@ -64,36 +61,23 @@ class App(tk.Tk):
             font=("Arial", 16, "bold"),
         )
         self.title_label.pack(side="left", padx=10)
-        # self.appbar.pack(fill="x") # Don't pack initially
-
 
         # --- Button frame for tabs (initially hidden, shown after login) ---
         self.button_frame = tk.Frame(self.appbar, bg="#3B82F6")
         self.buttons = [] # To store tab buttons
-        # self.button_frame.pack(side="right") # Don't pack initially
-
 
         # --- Tab Instances (initialized but not packed until show_main) ---
         self.tabs = {} # Dictionary to hold tab instances
 
         # Initialize tab instances. Pass necessary data and callbacks.
-        # Camera tab needs parent (self)
         self.camera_tab: Camera | None = None # Initialize as None, created in show_main
 
         # Login Page - Initialize first and pack
-        # Initialize Login page, passing the show_main method as the success callback
         self.login_frame = LoginPage(self, self.show_main, self.staff_list)
-        # Pack the login frame first so it's the initial view
         self.login_frame.pack(expand=True, fill="both")
 
-
         # --- Set window close protocol ---
-        # This ensures on_closing is called when the window is closed (e.g., by clicking the 'X' button)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        # --- DO NOT show initial tab here. show_main will handle this after login. ---
-        # self.show_tab("Camera") # Remove this line
-
 
     def toggle_fullscreen(self,event=None):
         self.is_fullscreen = not self.is_fullscreen
@@ -105,26 +89,15 @@ class App(tk.Tk):
         self.current_customer_for_checkout = customer
         print(f"[*] App received customer ID {getattr(customer, 'id', 'N/A')} for checkout.")
 
-
     # --- Callback method to add a revenue record (Called by Checkout tab) ---
     def add_revenue_record_callback(self, revenue_data: RevenueData) -> None:
-        """
-        Callback method provided to the Checkout tab to add a new revenue record.
-        This method is called by the Checkout tab when a checkout is finalized.
-        """
-        print(f"[*] App received new revenue record from Checkout: {revenue_data}")
-        # Add the new record to the central revenue list managed by the App
         if isinstance(revenue_data, RevenueData):
             self.revenue_list.append(revenue_data)
             print("[✓] Added record to central revenue_list in App.")
 
-            # --- Optional: Save to Database ---
-            # You would typically save the new record to the database here
+            # --- Save to Database ---
             if self.db_conn:
                 try:
-                    # Assuming DB_Connector has a method to save revenue data
-                    # Replace with your actual method name and parameters
-                    # self.db_conn.save_revenue(revenue_data)
                     print("[*] Database save logic for new revenue record would go here.")
                 except Exception as e:
                     print(f"[!] Error saving new revenue record to database: {e}")
@@ -133,7 +106,6 @@ class App(tk.Tk):
                          messagebox.showerror("Database Save Error", f"Could not save revenue record: {e}")
 
 
-            # Tell the Revenue tab to refresh its display to include the new record
             # Check if the tab instance exists before calling the method
             if hasattr(self, 'revenue_tab') and self.revenue_tab and hasattr(self.revenue_tab, 'refresh_display'):
                  print("[*] Signaling Revenue tab to refresh display.")
@@ -154,11 +126,6 @@ class App(tk.Tk):
 
     # --- New Callback for refreshing Room Management tab ---
     def refresh_room_management_callback(self) -> None:
-        """
-        Callback method called by the Customer tab when customer data that affects
-        room occupancy is changed (added, edited, removed).
-        This method signals the Room Management tab to refresh its display.
-        """
         print("[*] App received signal to refresh Room Management tab.")
         # Check if the tab instance exists before calling the method
         if hasattr(self, 'room_management_tab') and self.room_management_tab and hasattr(self.room_management_tab, 'refresh_display'):
@@ -170,7 +137,6 @@ class App(tk.Tk):
 
 
     def show_main(self):
-        """Called after successful login to set up and display the main application UI."""
         print("[*] Login successful. Setting up main application UI.")
         # Hide the login page
         self.login_frame.pack_forget()
@@ -178,10 +144,6 @@ class App(tk.Tk):
         # Pack the app bar and button frame
         self.appbar.pack(fill="x")
         self.button_frame.pack(side="right") # Pack the button frame here
-
-        # Initialize other tabs now that login is complete and DB is connected (handled in main)
-        # Pass 'self' as the controller to tabs that need to interact with App data/methods
-        # Pass callbacks where needed
 
         # Initialize Camera tab (needs parent)
         self.camera_tab = Camera(self) # Now initialized here after login
@@ -217,7 +179,6 @@ class App(tk.Tk):
         }
 
         # Create buttons to switch tabs
-        # Clear existing buttons first if show_main could be called multiple times (unlikely here)
         for btn in self.buttons:
             btn.destroy()
         self.buttons = [] # Reset the list
@@ -240,7 +201,6 @@ class App(tk.Tk):
 
 
     def show_tab(self, tab_name):
-        """Switches the currently displayed tab."""
         print(f"[*] Switching to tab: {tab_name}")
         # Hide all tabs
         for name, tab in self.tabs.items():
@@ -252,34 +212,24 @@ class App(tk.Tk):
             self.tabs[tab_name].pack(expand=True, fill="both")
 
             # --- Trigger refresh for specific tabs when shown ---
-            # If switching to Checkout, load the current customer data
-            # Check if the tab instance exists before calling the method
             if tab_name == "Thanh Toán" and hasattr(self, 'checkout_tab') and self.checkout_tab and hasattr(self.checkout_tab, 'refresh_display'):
                  print("[*] Showing Checkout tab, refreshing display.")
                  self.checkout_tab.refresh_display() # Call refresh on Checkout
 
             # If switching to Revenue, refresh its display from the central list
-            # Check if the tab instance exists before calling the method
             elif tab_name == "Doanh thu" and hasattr(self, 'revenue_tab') and self.revenue_tab and hasattr(self.revenue_tab, 'refresh_display'):
                  print("[*] Showing Revenue tab, refreshing display.")
                  self.revenue_tab.refresh_display() # Call refresh on Revenue
 
             # If switching to Room Management, refresh its display
-            # Check if the tab instance exists before calling the method
             elif tab_name == "Quản Lý Phòng" and hasattr(self, 'room_management_tab') and self.room_management_tab and hasattr(self.room_management_tab, 'refresh_display'):
                  print("[*] Showing Room Management tab, refreshing display.")
                  self.room_management_tab.refresh_display() # Call refresh on Room Management
 
-            # Add similar logic for other tabs that need refresh when shown
-
-
     def on_closing(self):
-        """Handles cleanup when the main window is closed."""
         print("[*] Closing main window...")
 
         # 1. Signal camera tab to stop its loop and release capture
-        # This should also cancel Tkinter 'after' calls within the Camera tab
-        # Add checks to ensure the tab instance and stop_camera method exist
         if hasattr(self, 'camera_tab') and self.camera_tab and hasattr(self.camera_tab, 'stop_camera'):
             try:
                 self.camera_tab.stop_camera()
@@ -291,7 +241,6 @@ class App(tk.Tk):
 
 
         # 2. Explicitly destroy any OpenCV windows
-        # This should happen after camera capture is released
         try:
             cv2.destroyAllWindows()
             print("[✓] Explicitly destroyed OpenCV windows.")
@@ -300,21 +249,18 @@ class App(tk.Tk):
 
 
         # 3. Add a small delay to allow resources to be released by the OS/libraries
-        # Keeping the delay, might help with resource finalization
         time.sleep(0.1) # Reduced delay slightly
 
 
         # 4. Close database connection if it's open
-        # The DB_Connector is now closed in the main function's finally block
-        # if hasattr(self, 'db_conn') and self.db_conn:
-        #      try:
-        #          # Assuming this method closes the connection
-        #          self.db_conn.closeBuffer()
-        #          print("[✓] Database connection closed.")
-        #      except Exception as e:
-        #          print(f"[!] Error closing database connection: {e}")
+        if hasattr(self, 'db_conn') and self.db_conn:
+             try:
+                 # Assuming this method closes the connection
+                 self.db_conn.closeBuffer()
+                 print("[✓] Database connection closed.")
+             except Exception as e:
+                 print(f"[!] Error closing database connection: {e}")
         print("[*] Database connection closure is handled in main function.")
-
 
         # 5. Destroy the Tkinter window, which stops the mainloop
         try:
@@ -335,6 +281,3 @@ class App(tk.Tk):
 
         self.quit()
         print("[*] Application shutdown sequence finished.")
-        # The process should exit naturally now if all resources are released.
-
-

@@ -17,26 +17,6 @@ COLOR_TEXT_DARK = "#333333"    # Dark gray for text
 COLOR_TEXT_MEDIUM = "#555555" # Medium gray for secondary text/labels
 COLOR_BORDER_GRAY = "#cccccc" # Light gray border
 
-# Mock StaffInfo if not available for testing standalone
-# try:
-# except ImportError:
-#     print("Warning: staff_information.py not found. Using mock StaffInfo.")
-#     class StaffInfo:
-#          def __init__(self, id=None, name=None, sex=None, birthday=None, role=None, username=None, password=None, permissions=None):
-#              self.id = id
-#              self.name = name
-#              self.sex = sex
-#              self.birthday = birthday
-#              self.role = role
-#              self.username = username if username is not None else ""
-#              self.password = password if password is not None else ""
-#              self.permissions = permissions
-#          def haveNone(self): # Example check
-#              return any(getattr(self, field) is None or getattr(self, field) == "" for field in ['username', 'password'])
-#          def __str__(self):
-#              return f"StaffInfo(ID: {self.id}, Username: {self.username}, Role: {self.role})"
-
-
 class LoginPage(tk.Frame):
     def __init__(self, parent, show_main, staff_list):
         super().__init__(parent, bg=COLOR_BACKGROUND_LIGHT) # Set main frame background
@@ -58,7 +38,6 @@ class LoginPage(tk.Frame):
 
 
         # --- Inner Frame for Centering Content ---
-        # Use a simple Frame to put content inside the LabelFrame for grid layout
         self.login_content_frame = tk.Frame(self.login_screen, bg=COLOR_MAIN_PANEL_BG)
         # Pack this inner frame to center its contents within the LabelFrame
         self.login_content_frame.pack(expand=True)
@@ -181,9 +160,6 @@ class LoginPage(tk.Frame):
 
         # After the loop, check if authentication was successful
         if authenticated_staff:
-            # Login successful
-            # You might want to store the authenticated_staff object somewhere accessible
-            # self.authenticated_user = authenticated_staff # Example
             messagebox.showinfo("Đăng Nhập Thành Công", f"Xin Chào {authenticated_staff.name}!") # Use staff name in welcome
             self.show_main() # Call the function to switch to the main application UI
         else:

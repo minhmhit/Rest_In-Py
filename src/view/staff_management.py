@@ -103,9 +103,6 @@ class StaffManagement(tk.Frame):
         # Populate Treeview initially
         self.populate_treeview()
 
-
-        # --- Buttons (placed in functionPanel) ---
-        # --- FIX: Make button_font, button_padx, button_pady instance attributes ---
         self.button_font = ("Arial", 10, "bold")
         self.button_pady = 8
         self.button_padx = 15
@@ -137,7 +134,6 @@ class StaffManagement(tk.Frame):
 
 
     # --- Helper to process raw date input (string or datetime) into datetime object ---
-    # Copy this method from Customer/Checkout classes
     def _process_date_input_to_datetime(self, raw_date_value):
          """Converts raw date input (string or datetime) to a datetime object or None."""
          if isinstance(raw_date_value, datetime):
@@ -156,7 +152,6 @@ class StaffManagement(tk.Frame):
 
 
     # --- Helper to create calendar command closures (Outputs YYYY-MM-DD) ---
-    # Copy this method from Customer class
     def create_calendar_command(self, parent_window, entry_widget, field_title): # Renamed field_name to field_title for clarity with button text
          """Helper to create calendar command closures."""
          def open_calendar():
@@ -190,15 +185,12 @@ class StaffManagement(tk.Frame):
 
 
     # --- Helper to map field name to Vietnamese title (Optional but good) ---
-    # Use the field_name_to_title map created in __init__
     def get_field_title(self, field_name):
-        """Helper to get the Vietnamese title for a given field name."""
         return self.field_name_to_title.get(field_name, field_name)
 
 
     # --- populate_treeview method ---
     def populate_treeview(self):
-        """Clears and repopulates the treeview from self.staff_list."""
         # Clear existing items
         for item in self.tree.get_children():
             self.tree.delete(item)
