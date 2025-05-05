@@ -14,6 +14,8 @@ from docx import Document
 from docx.shared import Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
+from view.utils import delete_customer_folder
+
 # --- Define colors --- (Keep consistent)
 COLOR_PRIMARY_BLUE = "#3B82F6"
 COLOR_ACCENT_GREEN = "#28a745"
@@ -401,6 +403,9 @@ class Checkout(tk.Frame):
 
                 # save revenue to database
                 self.db_conn.setRevenueToDatabase(revenue_record)
+
+                # delete customer id folder
+                delete_customer_folder(str(revenue_record.id))
 
                 # Clear the display in the Checkout tab
                 self.clear_display()

@@ -1,6 +1,7 @@
 import cv2
 import os
 import tkinter as tk
+import shutil
 from tkinter import messagebox
 
 phone_camera_url = 'http://192.168.167.124:4747/video' 
@@ -104,3 +105,40 @@ def capture_customer_image(customer_id: str) -> bool:
         print("[!] No frame was captured, so no image was saved.")
 
     return success
+
+def delete_customer_folder(customer_id: str, delete_contents: bool = True) -> bool:
+    if not customer_id:
+        print("[!] Customer ID is empty, cannot delete folder.")
+        messagebox.showerror("Lỗi Xóa Thư Mục", "Customer ID không hợp lệ.")
+        return False
+
+    # Define the absolute directory path, same as in capture_customer_image
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    dataset_dir = os.path.join(project_root, "dataset", customer_id.replace(" ", "_"))
+
+    print(f"[*] Attempting to delete folder (absolute): {dataset_dir}")
+
+    if not os.path.exists(dataset_dir):
+        print(f"[*] Folder '{dataset_dir}' does not exist.")
+        messagebox.showinfo("Thư Mục Không Tồn Tại", f"Thư mục '{dataset_dir}' không tồn tại.")
+        return False
+
+    try:
+        if delete_contents:
+            shutil.rmtree(dataset_dir)
+            print(f"[*] Successfully deleted folder and contents: {dataset_dir}")
+            messagebox.showinfo("Thành Công", f"Đã xóa thư mục và nội dung thành công:\n{dataset_dir}")
+        else:
+            os.rmdir(dataset_dir)
+            print(f"[*] Successfully deleted folder (if empty): {dataset_dir}")
+            messagebox.showinfo("Thành Công", f"Đã xóa thư mục (nếu trống) thành công:\n{dataset_dir}")
+        return True  # Indicate success
+
+    except OSError as e:
+        print(f"[!] Error deleting folder {dataset_dir}: {e}")
+        messagebox.showerror("Lỗi Xóa Thư Mục", f"Không thể xóa thư mục:\n{e}")
+        return False
+    except Exception as e:
+        print(f"[!] An unexpected error occurred: {e}")
+        messagebox.showerror("Lỗi Không Xác Định", f"Lỗi không xác định:\n{e}")
+        return False
