@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+import pandas as pd
+from tkinter import messagebox, ttk, filedialog
 from datetime import datetime, date # Import date
 from view.models import CustomerInfo
 from tkcalendar import Calendar
@@ -121,11 +122,31 @@ class Customer(tk.Frame):
             relief=tk.RAISED, padx=button_padx, pady=button_pady, cursor="hand2",
             command=self.sent_data_to_checkout,
         )
+        self.exportButton = tk.Button(
+            self.functionPanel, text="Xuất ra Excel", font=button_font,
+            bg=COLOR_ACCENT_GREEN, fg="white", activebackground="#1e7e34", activeforeground="white", # Using green for export
+            relief=tk.RAISED, padx=button_padx, pady=button_pady, cursor="hand2",
+            command=self.export_to_excel, # Link to the new method
+        )
 
-        self.addCustomer.pack(side="left", expand=True, fill=tk.X, padx=5)
-        self.removeCustomer.pack(side="left", expand=True, fill=tk.X, padx=5)
-        self.changeInformation.pack(side="left", expand=True, fill=tk.X, padx=5)
-        self.customerPayment.pack(side="left", expand=True, fill=tk.X, padx=5)
+        # self.addCustomer.pack(side="left", expand=True, fill=tk.X, padx=5)
+        # self.removeCustomer.pack(side="left", expand=True, fill=tk.X, padx=5)
+        # self.changeInformation.pack(side="left", expand=True, fill=tk.X, padx=5)
+        # self.customerPayment.pack(side="left", expand=True, fill=tk.X, padx=5)
+        # self.exportButton.grid(row=0, column=4, sticky="ew", padx=5, pady=5) # Place the new button
+
+        # Arrange buttons in the functionPanel
+        self.functionPanel.columnconfigure(0, weight=1)
+        self.functionPanel.columnconfigure(1, weight=1)
+        self.functionPanel.columnconfigure(2, weight=1)
+        self.functionPanel.columnconfigure(3, weight=1)
+        self.functionPanel.columnconfigure(4, weight=1) # Column for the new button
+
+        self.addCustomer.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        self.removeCustomer.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        self.changeInformation.grid(row=0, column=2, sticky="ew", padx=5, pady=5)
+        self.customerPayment.grid(row=0, column=3, sticky="ew", padx=5, pady=5)
+        self.exportButton.grid(row=0, column=4, sticky="ew", padx=5, pady=5) 
 
     # --- Helper methods for room availability ---
     def _get_occupied_room_numbers(self):
@@ -806,3 +827,48 @@ class Customer(tk.Frame):
              if self.winfo_exists():
                   messagebox.showwarning("Lỗi dữ liệu", f"Không tìm thấy dữ liệu khách hàng với ID {customer_id_to_checkout} trong danh sách.")
 
+    def export_to_excel(self):
+        if not self.customer_list:
+            if self.winfo_exists():
+                 messagebox.showinfo("Thông báo", "Danh sách khách hàng trống, không có gì để xuất.")
+            return
+
+        # Define the file path using filedialog
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+            title="Lưu Danh Sách Khách Hàng"
+        )
+
+        if not filepath:
+            return # User cancelled
+
+        try:
+            # Prepare data for pandas DataFrame
+            # Ensure dates are in a consistent string format (YYYY-MM-DD)
+            data = []
+            for customer in self.customer_list:
+                row_data = {}
+                for title, field in self.customer_fields:
+                     value = getattr(customer, field, "")
+                     if isinstance(value, (datetime, date)):
+                          row_data[title] = value.strftime("%Y-%M-%d") if value else ""
+                     else:
+                          row_data[title] = str(value) if value is not None else ""
+                data.append(row_data)
+
+            df = pd.DataFrame(data)
+
+            # Rename columns to match Treeview headers (already done by using titles as keys in row_data)
+            # df.columns = self.treeview_columns # This line is not needed if using titles as keys
+
+            # Save to Excel
+            df.to_excel(filepath, index=False)
+
+            if self.winfo_exists():
+                 messagebox.showinfo("Thành công", f"Đã xuất dữ liệu ra file:\n{filepath}")
+
+        except Exception as e:
+            print(f"[!] Error exporting to Excel: {e}")
+            if self.winfo_exists():
+                 messagebox.showerror("Lỗi", f"Không thể xuất dữ liệu ra Excel:\n{e}")
