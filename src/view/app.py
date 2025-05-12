@@ -28,7 +28,7 @@ class App(tk.Tk):
         self.is_fullscreen = False
         self.title("Quản Lí Nhà Trọ")
         self.geometry("1280x720")
-        self.iconbitmap("src/view/assets/hostel.ico")
+        # self.iconbitmap("src/view/assets/hostel.ico")
         self.configure(bg="#3B82F6")
         self.bind("<F11>", self.toggle_fullscreen)
 
